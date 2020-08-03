@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Threading.Tasks;
 using System.IO;
+using System.Collections.Generic;
 
 
 #if !UNITY_EDITOR
@@ -10,7 +11,8 @@ using Windows.Storage.Streams;
 
 public class NewTcpClient : MonoBehaviour
 {
-    [SerializeField] public string messageType;
+    [SerializeField] public VertexCollector collector;
+    [SerializeField] public int messageType;
     [SerializeField] public string message;
 
     [SerializeField] public string receivedMessage = "";
@@ -24,6 +26,8 @@ public class NewTcpClient : MonoBehaviour
 
     [SerializeField] public string errorLog;
 
+    List<Vector3> vertices;
+    List<Vector3> normals;
 
     public void Start()
     {
@@ -31,8 +35,17 @@ public class NewTcpClient : MonoBehaviour
         GUILog.Invoke("Connected to server");        
     }
 
-    public void SendData()
+    public void SendMessage()
     {
+        messageType = 1;
+        var exchangeTask = Task.Run(() => ExchangeDataAsync());
+    }
+
+    public void SendPCD()
+    {
+        messageType = 2;
+        vertices = collector.GetVertices();
+        normals = collector.GetNormals();
         var exchangeTask = Task.Run(() => ExchangeDataAsync());
     }
 
@@ -41,7 +54,7 @@ public class NewTcpClient : MonoBehaviour
     {
         try 
         {
-#if !UNITY_EDITOR            
+#if !UNITY_EDITOR
             ClientSocket = new Windows.Networking.Sockets.StreamSocket();
             Windows.Networking.HostName serverHost = new Windows.Networking.HostName(host);
             await ClientSocket.ConnectAsync(serverHost, port);
@@ -60,21 +73,40 @@ public class NewTcpClient : MonoBehaviour
     }
 
     public async Task ExchangeDataAsync()
-    {
-        await SendDataAsync(messageType);
-        await SendDataAsync(message);
+    {   
+        await SendDataAsync();
         await ReceiveDataAsync();
     }
 
-    public async Task SendDataAsync(string data)
+    public async Task SendDataAsync()
     {
         try
         {
 #if !UNITY_EDITOR
         using(var writer = new DataWriter(ClientSocket.OutputStream))
         {
-            writer.WriteString(writer.MeasureString(data).ToString().PadRight(64,' '));
-            writer.WriteString(data);
+            writer.ByteOrder = ByteOrder.BigEndian;
+            writer.WriteInt64(messageType);
+            switch(messageType)
+            {
+                case 1:
+                    writer.WriteInt64(writer.MeasureString(message));
+                    writer.WriteString(message);
+                    break;
+                case 2:
+                    writer.WriteInt64(vertices.Count);
+                    for (int i = 0; i < vertices.Count; i++)
+                    {
+                        writer.WriteDouble((double)vertices[i].x);
+                        writer.WriteDouble((double)vertices[i].y);
+                        writer.WriteDouble((double)vertices[i].z);
+                        writer.WriteDouble((double)normals[i].x);
+                        writer.WriteDouble((double)normals[i].y);
+                        writer.WriteDouble((double)normals[i].z);
+                    }
+                    break;
+            }
+            
             await writer.StoreAsync();
             await writer.FlushAsync();
             writer.DetachStream();
@@ -130,8 +162,8 @@ public class NewTcpClient : MonoBehaviour
     {
         if (errorPrompted)
         {
-            //GUILog.Invoke(errorLog);
-            //errorPrompted = false;
+            GUILog.Invoke(errorLog);
+            errorPrompted = false;
         }
         if (messageReceived)
         {

@@ -30,34 +30,42 @@ public class VertexCollector : MonoBehaviour
 
     public VerticesEvent OnVerticesCollected = new VerticesEvent();
     
+    public List<Vector3> GetVertices()
+    {
+        return vertices;
+    }
+
+    public List<Vector3> GetNormals()
+    {
+        return normals;
+    }
 
     public void Collect()
     {
         vertices.Clear();
         normals.Clear();
 
-        List<Mesh> meshes = manager.GetMeshes();
+        List<MeshFilter> meshes = manager.GetMeshFilters();
+        
 
-        foreach (Mesh mesh in meshes)
+        foreach (MeshFilter mesh in meshes)
         {
-            mesh.RecalculateNormals();
-            vertices.AddRange(mesh.vertices);
-            normals.AddRange(mesh.normals);
+            var matrix = mesh.transform.localToWorldMatrix;
+            mesh.sharedMesh.RecalculateNormals();
+            for (int i = 0; i < mesh.sharedMesh.vertices.Length; i++)
+            {
+                vertices.Add(matrix.MultiplyVector(mesh.sharedMesh.vertices[i]));
+                normals.Add(matrix.MultiplyVector(mesh.sharedMesh.normals[i]));
+            }
+            //vertices.AddRange(mesh.sharedMesh.vertices);
+            //normals.AddRange(mesh.sharedMesh.normals);
         }
 
         if (OnVerticesCollected != null) 
         {
             OnVerticesCollected.Invoke(string.Format("Number of vertices: {0}", vertices.Count));
         }
-    }
-    public List<Vector3> GetVertices()
-    {
-        return vertices;
-    }
-    public List<Vector3> GetNormals()
-    {
-        return normals;
-    }
+    }   
 }
 
 [Serializable]
