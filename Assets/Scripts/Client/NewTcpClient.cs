@@ -29,7 +29,7 @@ public class NewTcpClient : MonoBehaviour
     List<Vector3> vertices;
     List<Vector3> normals;
 
-    public void Start()
+    public void Connect()
     {
         var connectTask = Task.Run(() => ConnectAsync()); connectTask.Wait();
         GUILog.Invoke("Connected to server");        
@@ -93,17 +93,53 @@ public class NewTcpClient : MonoBehaviour
                     writer.WriteInt64(writer.MeasureString(message));
                     writer.WriteString(message);
                     break;
-                case 2:
+                case 2:                    
+                    int intChunks = vertices.Count / 100;
+                    int modulo = vertices.Count % 100;
+
+                    writer.WriteInt64(intChunks);
+                    writer.WriteInt64(modulo);
+                    for(int i = 0; i < intChunks; i++)
+                    {
+                        var step = i*100; 
+                        for (int j = 0; j < 100; j++)
+                        {
+                            writer.WriteDouble(Convert.ToDouble(vertices[step+j].x));
+                            writer.WriteDouble(Convert.ToDouble(vertices[step+j].y));
+                            writer.WriteDouble(Convert.ToDouble(vertices[step+j].z));
+                            writer.WriteDouble(Convert.ToDouble( normals[step+j].x));
+                            writer.WriteDouble(Convert.ToDouble( normals[step+j].y));
+                            writer.WriteDouble(Convert.ToDouble( normals[step+j].z));
+                        }
+                        using(var stream = ClientSocket.InputStream.AsStreamForRead();)
+                        {
+                            byte[] buffer = new byte[1];
+
+                        }
+                    }
+                    for (int j = 0; j < modulo; j++)
+                    {
+                        writer.WriteDouble(Convert.ToDouble(vertices[intChunks*100+j].x));
+                        writer.WriteDouble(Convert.ToDouble(vertices[intChunks*100+j].y));
+                        writer.WriteDouble(Convert.ToDouble(vertices[intChunks*100+j].z));
+                        writer.WriteDouble(Convert.ToDouble( normals[intChunks*100+j].x));
+                        writer.WriteDouble(Convert.ToDouble( normals[intChunks*100+j].y));
+                        writer.WriteDouble(Convert.ToDouble( normals[intChunks*100+j].z));
+                    }
+
+                    /*
                     writer.WriteInt64(vertices.Count);
                     for (int i = 0; i < vertices.Count; i++)
                     {
-                        writer.WriteDouble((double)vertices[i].x);
-                        writer.WriteDouble((double)vertices[i].y);
-                        writer.WriteDouble((double)vertices[i].z);
-                        writer.WriteDouble((double)normals[i].x);
-                        writer.WriteDouble((double)normals[i].y);
-                        writer.WriteDouble((double)normals[i].z);
+                        writer.WriteDouble(Convert.ToDouble(vertices[i].x));
+                        writer.WriteDouble(Convert.ToDouble(vertices[i].y));
+                        writer.WriteDouble(Convert.ToDouble(vertices[i].z));
+                        writer.WriteDouble(Convert.ToDouble(normals[i].x));
+                        writer.WriteDouble(Convert.ToDouble(normals[i].y));
+                        writer.WriteDouble(Convert.ToDouble(normals[i].z));
                     }
+                    */
+
                     break;
             }
             

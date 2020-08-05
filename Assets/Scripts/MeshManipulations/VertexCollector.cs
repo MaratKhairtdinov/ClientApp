@@ -50,15 +50,15 @@ public class VertexCollector : MonoBehaviour
 
         foreach (MeshFilter mesh in meshes)
         {
-            var matrix = mesh.transform.localToWorldMatrix;
+            //var matrix = mesh.transform.localToWorldMatrix;
             mesh.sharedMesh.RecalculateNormals();
-            for (int i = 0; i < mesh.sharedMesh.vertices.Length; i++)
-            {
-                vertices.Add(matrix.MultiplyVector(mesh.sharedMesh.vertices[i]));
-                normals.Add(matrix.MultiplyVector(mesh.sharedMesh.normals[i]));
-            }
-            //vertices.AddRange(mesh.sharedMesh.vertices);
-            //normals.AddRange(mesh.sharedMesh.normals);
+            //for (int i = 0; i < mesh.sharedMesh.vertices.Length; i++)
+            //{
+            //    vertices.Add(matrix.MultiplyVector(mesh.sharedMesh.vertices[i]));
+            //    normals.Add(matrix.MultiplyVector(mesh.sharedMesh.normals[i]));
+            //}
+            vertices.AddRange(mesh.sharedMesh.vertices);
+            normals.AddRange(mesh.sharedMesh.normals);
         }
 
         if (OnVerticesCollected != null) 
