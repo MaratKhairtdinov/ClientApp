@@ -83,70 +83,45 @@ public class NewTcpClient : MonoBehaviour
         try
         {
 #if !UNITY_EDITOR
-        using(var writer = new DataWriter(ClientSocket.OutputStream))
-        {
-            writer.ByteOrder = ByteOrder.BigEndian;
-            writer.WriteInt64(messageType);
-            switch(messageType)
+            using(var writer = new DataWriter(ClientSocket.OutputStream))
             {
-                case 1:
-                    writer.WriteInt64(writer.MeasureString(message));
-                    writer.WriteString(message);
-                    break;
-                case 2:                    
-                    int intChunks = vertices.Count / 100;
-                    int modulo = vertices.Count % 100;
-
-                    writer.WriteInt64(intChunks);
-                    writer.WriteInt64(modulo);
-                    for(int i = 0; i < intChunks; i++)
-                    {
-                        var step = i*100; 
-                        for (int j = 0; j < 100; j++)
+                writer.ByteOrder = ByteOrder.BigEndian;
+                writer.UnicodeEncoding = UnicodeEncoding.Utf8;
+                writer.WriteInt64(messageType);
+                writer.StoreAsync();
+                writer.FlushAsync();
+                switch(messageType)
+                {
+                    case 1:
+                        writer.WriteInt64(writer.MeasureString(message));
+                        writer.WriteString(message);
+                        writer.StoreAsync();
+                        writer.FlushAsync();
+                        break;
+                    case 2:
+                        int step = 100;
+                        int chunks = vertices.Count/step;
+                        writer.WriteInt64(chunks);
+                        writer.WriteInt64(step);
+                        writer.StoreAsync();
+                        writer.FlushAsync();
+                        for(int i = 0; i < chunks*step; i+=step)
                         {
-                            writer.WriteDouble(Convert.ToDouble(vertices[step+j].x));
-                            writer.WriteDouble(Convert.ToDouble(vertices[step+j].y));
-                            writer.WriteDouble(Convert.ToDouble(vertices[step+j].z));
-                            writer.WriteDouble(Convert.ToDouble( normals[step+j].x));
-                            writer.WriteDouble(Convert.ToDouble( normals[step+j].y));
-                            writer.WriteDouble(Convert.ToDouble( normals[step+j].z));
+                            for(int j = i; j<i+step; j++)
+                            {
+                                writer.WriteDouble((double)vertices[j].x); writer.WriteDouble((double)vertices[j].y); writer.WriteDouble((double)vertices[j].z);
+                                writer.WriteDouble((double)normals[j].x);  writer.WriteDouble((double)normals[j].y);  writer.WriteDouble((double)normals[j].z);
+                            }
+                            writer.StoreAsync();
+                            writer.FlushAsync();
+                            PromptError(string.Format("Chunk #{0} sent", i/step));
                         }
-                        using(var stream = ClientSocket.InputStream.AsStreamForRead();)
-                        {
-                            byte[] buffer = new byte[1];
-
-                        }
-                    }
-                    for (int j = 0; j < modulo; j++)
-                    {
-                        writer.WriteDouble(Convert.ToDouble(vertices[intChunks*100+j].x));
-                        writer.WriteDouble(Convert.ToDouble(vertices[intChunks*100+j].y));
-                        writer.WriteDouble(Convert.ToDouble(vertices[intChunks*100+j].z));
-                        writer.WriteDouble(Convert.ToDouble( normals[intChunks*100+j].x));
-                        writer.WriteDouble(Convert.ToDouble( normals[intChunks*100+j].y));
-                        writer.WriteDouble(Convert.ToDouble( normals[intChunks*100+j].z));
-                    }
-
-                    /*
-                    writer.WriteInt64(vertices.Count);
-                    for (int i = 0; i < vertices.Count; i++)
-                    {
-                        writer.WriteDouble(Convert.ToDouble(vertices[i].x));
-                        writer.WriteDouble(Convert.ToDouble(vertices[i].y));
-                        writer.WriteDouble(Convert.ToDouble(vertices[i].z));
-                        writer.WriteDouble(Convert.ToDouble(normals[i].x));
-                        writer.WriteDouble(Convert.ToDouble(normals[i].y));
-                        writer.WriteDouble(Convert.ToDouble(normals[i].z));
-                    }
-                    */
-
-                    break;
+                        break;
+                }            
+                //await writer.StoreAsync();
+                //await writer.FlushAsync();
+                writer.DetachStream();
             }
-            
-            await writer.StoreAsync();
-            await writer.FlushAsync();
-            writer.DetachStream();
-        }
 #endif
         }
         catch (Exception e)
