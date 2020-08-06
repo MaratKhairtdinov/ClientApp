@@ -52,7 +52,7 @@ public class NewTcpClient : MonoBehaviour
 
     public async Task ConnectAsync()
     {
-        try 
+        try
         {
 #if !UNITY_EDITOR
             ClientSocket = new Windows.Networking.Sockets.StreamSocket();
@@ -88,23 +88,23 @@ public class NewTcpClient : MonoBehaviour
                 writer.ByteOrder = ByteOrder.BigEndian;
                 writer.UnicodeEncoding = UnicodeEncoding.Utf8;
                 writer.WriteInt64(messageType);
-                writer.StoreAsync();
-                writer.FlushAsync();
+                //writer.StoreAsync();
+                //writer.FlushAsync();
                 switch(messageType)
                 {
                     case 1:
                         writer.WriteInt64(writer.MeasureString(message));
                         writer.WriteString(message);
-                        writer.StoreAsync();
-                        writer.FlushAsync();
+                        //writer.StoreAsync();
+                        //writer.FlushAsync();
                         break;
                     case 2:
                         int step = 100;
                         int chunks = vertices.Count/step;
                         writer.WriteInt64(chunks);
                         writer.WriteInt64(step);
-                        writer.StoreAsync();
-                        writer.FlushAsync();
+                        //writer.StoreAsync();
+                        //writer.FlushAsync();
                         for(int i = 0; i < chunks*step; i+=step)
                         {
                             for(int j = i; j<i+step; j++)
@@ -112,14 +112,14 @@ public class NewTcpClient : MonoBehaviour
                                 writer.WriteDouble((double)vertices[j].x); writer.WriteDouble((double)vertices[j].y); writer.WriteDouble((double)vertices[j].z);
                                 writer.WriteDouble((double)normals[j].x);  writer.WriteDouble((double)normals[j].y);  writer.WriteDouble((double)normals[j].z);
                             }
-                            writer.StoreAsync();
-                            writer.FlushAsync();
+                            //writer.StoreAsync();
+                            //writer.FlushAsync();
                             PromptError(string.Format("Chunk #{0} sent", i/step));
                         }
                         break;
                 }            
-                //await writer.StoreAsync();
-                //await writer.FlushAsync();
+                await writer.StoreAsync();
+                await writer.FlushAsync();
                 writer.DetachStream();
             }
 #endif

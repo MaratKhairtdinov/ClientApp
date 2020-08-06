@@ -68,7 +68,7 @@ namespace HoloToolkit.Unity.SpatialMapping
         private void Update()
         {
 #if UNITY_EDITOR || UNITY_STANDALONE
-            // Use the 'network' sourced mesh.  
+            // Use the 'network' sourced mesh.
             if (Input.GetKeyUp(RemoteMappingKey))
             {
                 SpatialMappingManager.Instance.SetSpatialMappingSource(remoteMeshTarget);
