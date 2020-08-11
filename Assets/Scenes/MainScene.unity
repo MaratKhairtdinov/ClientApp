@@ -800,11 +800,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a16709e214d203148b6022bc3edc82c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  observer: {fileID: 663266071}
   collector: {fileID: 1351013097}
   messageType: 0
   message: Hello Server!
   receivedMessage: 
-  host: 192.168.0.102
+  host: 192.168.0.100
   port: 10000
   GUILog:
     m_PersistentCalls:
@@ -1307,6 +1308,7 @@ GameObject:
   - component: {fileID: 663266068}
   - component: {fileID: 663266070}
   - component: {fileID: 663266069}
+  - component: {fileID: 663266071}
   m_Layer: 5
   m_Name: SetHost
   m_TagString: Untagged
@@ -1374,6 +1376,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 663266067}
   m_CullTransparentMesh: 0
+--- !u!114 &663266071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 663266067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c51a425b6ac2f31408765a6afc1913a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &669587844
 GameObject:
   m_ObjectHideFlags: 0
@@ -1676,13 +1690,13 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 788885836}
-    characterCount: 0
+    characterCount: 3
     spriteCount: 0
     spaceCount: 0
-    wordCount: 0
+    wordCount: 1
     linkCount: 0
-    lineCount: 0
-    pageCount: 0
+    lineCount: 1
+    pageCount: 1
     materialCount: 1
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0

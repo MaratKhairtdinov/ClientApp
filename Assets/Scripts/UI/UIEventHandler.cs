@@ -30,9 +30,10 @@ public class UIEventHandler : MonoBehaviour
                 break;
             case ButtonType.SetHost:
                 keyboardInput.OnKeyboardCalled();
-                if (keyboardInput.inputString.Length>0) 
+                if (keyboardInput.inputString.Length>0)
                 {
                     client.host = keyboardInput.inputString;
+                    client.OnHostSet.Invoke(client.host);
                 }
                 break;
         }

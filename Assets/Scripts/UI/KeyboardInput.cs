@@ -13,6 +13,7 @@ public class KeyboardInput : MonoBehaviour
         keyboard = TouchScreenKeyboard.Open("", TouchScreenKeyboardType.Default, false, false, false, false);                 
     }
 
+
     
     private void Update()
     {

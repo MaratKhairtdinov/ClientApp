@@ -10,7 +10,7 @@ using Windows.Storage.Streams;
 #endif
 
 public class NewTcpClient : MonoBehaviour
-{
+{   
     [SerializeField] public VertexCollector collector;
     [SerializeField] public int messageType;
     [SerializeField] public string message;
@@ -24,15 +24,25 @@ public class NewTcpClient : MonoBehaviour
 #endif
     public ClientEvent GUILog;
 
+    public ClientEvent OnHostSet;
+
     [SerializeField] public string errorLog;
 
     List<Vector3> vertices;
     List<Vector3> normals;
 
+    private void Start()
+    {
+        if (OnHostSet != null)
+        {
+            OnHostSet.Invoke("Host: " + host);
+        }
+    }
+
     public void Connect()
     {
         var connectTask = Task.Run(() => ConnectAsync()); connectTask.Wait();
-        GUILog.Invoke("Connected to server");        
+        GUILog.Invoke("Connected to server");
     }
 
     public void SendMessage()
