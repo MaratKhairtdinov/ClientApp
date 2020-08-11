@@ -17,6 +17,6 @@ public class TextSetter : MonoBehaviour
 
     public void SetText(string text)
     {
-        this.text.text = (text + Environment.NewLine);
+        this.text.text = (text);
     }
 }

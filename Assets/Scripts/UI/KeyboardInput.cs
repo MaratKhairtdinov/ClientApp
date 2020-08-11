@@ -10,7 +10,7 @@ public class KeyboardInput : MonoBehaviour
 
     public void OnKeyboardCalled()
     {        
-        keyboard = TouchScreenKeyboard.Open("", TouchScreenKeyboardType.Default, false, false, false, false);                 
+        keyboard = TouchScreenKeyboard.Open("", TouchScreenKeyboardType.Default, false, false, false, false);
     }
 
 
