@@ -9,7 +9,7 @@ public class Counter : MonoBehaviour
     public TextMeshProUGUI textMP;
     public SpatialMappingObserver observer;
 
-    public void HandleEvent(ButtonType buttonType)
+    public void HandleButton(ButtonType buttonType)
     {
         var currentResolution = observer.TrianglesPerCubicMeter;
         switch (buttonType)

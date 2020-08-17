@@ -1,7 +1,9 @@
 ﻿using HoloToolkit.Unity.SpatialMapping;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class UIEventHandler : MonoBehaviour
 {
@@ -12,7 +14,7 @@ public class UIEventHandler : MonoBehaviour
 
     public KeyboardInput keyboardInput;
 
-    public void HandleEvent(ButtonType buttonType)
+    public void HandleButton(ButtonType buttonType)
     {
         switch (buttonType)
         {
@@ -37,6 +39,8 @@ public class UIEventHandler : MonoBehaviour
                 }
                 break;
         }
-        counter.HandleEvent(buttonType);
+        counter.HandleButton(buttonType);
     }
 }
+[Serializable]
+public class UIEvent : UnityEvent<string> { }

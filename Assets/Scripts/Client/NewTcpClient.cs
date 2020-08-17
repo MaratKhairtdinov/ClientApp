@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections.Generic;
-
+using UnityEngine.Events;
 
 #if !UNITY_EDITOR
 using Windows.Storage.Streams;
@@ -16,6 +16,8 @@ public class NewTcpClient : MonoBehaviour
     [SerializeField] public string message;
 
     [SerializeField] public string receivedMessage = "";
+
+    string serverErrorLog = string.Empty;
 
     [SerializeField] public string host;
     [SerializeField] public string port;
@@ -72,20 +74,31 @@ public class NewTcpClient : MonoBehaviour
         }
         catch (Exception e)
         {
-            PromptError(e.ToString());
+            PromptMessage(e.ToString());
         }
     }
 
-    void PromptError(string error)
+    void PromptMessage(string message)
     {
-        errorLog = error;
+        errorLog = message;
         errorPrompted = true;
     }
 
     public async Task ExchangeDataAsync()
-    {   
-        await SendDataAsync();
-        await ReceiveDataAsync();
+    {
+        int counter = 0;
+        while (counter < 5)
+        {
+            counter += 1;
+            await SendDataAsync();
+            serverErrorLog = await ReceiveDataAsync();
+            PromptMessage("Sending the data, attempt #" + counter);
+            if (serverErrorLog.Length == 0)
+            {
+                break;
+            }
+        }
+        PromptMessage(await ReceiveDataAsync());
     }
 
     public async Task SendDataAsync()
@@ -98,23 +111,17 @@ public class NewTcpClient : MonoBehaviour
                 writer.ByteOrder = ByteOrder.BigEndian;
                 writer.UnicodeEncoding = UnicodeEncoding.Utf8;
                 writer.WriteInt64(messageType);
-                //writer.StoreAsync();
-                //writer.FlushAsync();
                 switch(messageType)
                 {
                     case 1:
                         writer.WriteInt64(writer.MeasureString(message));
                         writer.WriteString(message);
-                        //writer.StoreAsync();
-                        //writer.FlushAsync();
                         break;
                     case 2:
                         int step = 100;
                         int chunks = vertices.Count/step;
                         writer.WriteInt64(chunks);
                         writer.WriteInt64(step);
-                        //writer.StoreAsync();
-                        //writer.FlushAsync();
                         for(int i = 0; i < chunks*step; i+=step)
                         {
                             for(int j = i; j<i+step; j++)
@@ -122,9 +129,7 @@ public class NewTcpClient : MonoBehaviour
                                 writer.WriteDouble((double)vertices[j].x); writer.WriteDouble((double)vertices[j].y); writer.WriteDouble((double)vertices[j].z);
                                 writer.WriteDouble((double)normals[j].x);  writer.WriteDouble((double)normals[j].y);  writer.WriteDouble((double)normals[j].z);
                             }
-                            //writer.StoreAsync();
-                            //writer.FlushAsync();
-                            PromptError(string.Format("Chunk #{0} sent", i/step));
+                            //PromptMessage(string.Format("Chunk #{0} sent", i/step));
                         }
                         break;
                 }            
@@ -136,49 +141,37 @@ public class NewTcpClient : MonoBehaviour
         }
         catch (Exception e)
         {
-            PromptError(e.ToString());
+            PromptMessage(e.ToString());
         }
     }
 
     
-    bool messageReceived = false;
 
-    public async Task ReceiveDataAsync()
+    public async Task<string> ReceiveDataAsync()
     {
+        string toReturn = string.Empty;
         try
         {
 #if !UNITY_EDITOR
-/*
-            using(var reader = new DataReader(ClientSocket.InputStream))
-            {
-                await reader.LoadAsync(2048);
-
-                var bytes = uint.Parse(reader.ReadString(64));
-                receivedMessage = reader.ReadString(bytes);
-
-                reader.DetachStream();
-
-                messageReceived = true;
-            }
-*/
-            var stream = ClientSocket.InputStream.AsStreamForRead();            
+            var stream = ClientSocket.InputStream.AsStreamForRead();
             byte[] buffer = new byte[64];
 
             await stream.ReadAsync(buffer, 0, 64);
             byte[] messageBuffer = new byte[int.Parse(System.Text.Encoding.UTF8.GetString(buffer))];
             await stream.ReadAsync(messageBuffer, 0, messageBuffer.Length);
 
-            receivedMessage = System.Text.Encoding.UTF8.GetString(messageBuffer);
-            messageReceived = true;
+            toReturn = System.Text.Encoding.UTF8.GetString(messageBuffer);            
 #endif
         }
         catch (Exception e)
-        {            
-            PromptError(e.ToString());           
+        {
+            PromptMessage(e.ToString());           
         }
+        return toReturn;
     }
 
     bool errorPrompted = false;
+    bool messagePrompted = false;
     private void Update()
     {
         if (errorPrompted)
@@ -186,12 +179,13 @@ public class NewTcpClient : MonoBehaviour
             GUILog.Invoke(errorLog);
             errorPrompted = false;
         }
-        if (messageReceived)
+        if (receivedMessage.Length!=0 && !messagePrompted)
         {
-            messageReceived = false;
+            messagePrompted = true;
             GUILog.Invoke(receivedMessage);
         }
     }
     
-    
 }
+[Serializable]
+public class ClientEvent : UnityEvent<string> { }
