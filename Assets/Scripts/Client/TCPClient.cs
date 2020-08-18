@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Threading.Tasks;
 using System.IO;
+using System.Text;
 using System.Collections.Generic;
 using UnityEngine.Events;
 
@@ -39,7 +40,7 @@ public class TCPClient : MonoBehaviour
     string clientMessage;
     private void Update()
     {
-        Listen();
+        //Listen();
         if (OnClientNotifies != null && messagePrepared)
         {
             messagePrepared = false;
@@ -48,8 +49,9 @@ public class TCPClient : MonoBehaviour
     }
     #endregion
 
-#region Network Thread Functions
+    #region Network Thread Functions
 
+    Task<bool> sendDataTask;
 
     public void PromptMessage(string message)
     {
@@ -60,7 +62,10 @@ public class TCPClient : MonoBehaviour
 
     public void Connect()
     {
-        Task connectTask = Task.Run(() => ConnectAsync()); connectTask.Wait();        
+        Task connectTask = Task.Run(() => ConnectAsync()); connectTask.Wait();
+        Listen();
+        SendString("Hello Server!");
+
     }
 
     public async Task ConnectAsync()
@@ -86,8 +91,8 @@ public class TCPClient : MonoBehaviour
      */
     protected byte[] inputBuffer, outputBuffer;
     private NetworkDataType outputMessageType, inputMessageType;
-    private NetworkErrorType localErrorType = NetworkErrorType.NoError;
-    private NetworkErrorType remoteErrorType;
+    private NetworkResponseType localErrorType = NetworkResponseType.NoError;
+    private NetworkResponseType remoteErrorType;
 
     /*
      * Runs the async task of sending the data over the network,
@@ -95,11 +100,11 @@ public class TCPClient : MonoBehaviour
      */
     public void SendData() 
     {
-        var sendDataTask = Task.Run(() => SendDataAsync(outputBuffer, outputMessageType));
+        this.sendDataTask = Task.Run(() => SendDataAsync(outputBuffer, outputMessageType));
     }
     
     /*
-     * Sends data asynchronously, takes byt[] as an argument along with the datatype being sent over the network, so that other side knows what to expect
+     * Sends data asynchronously, takes byte[] as an argument along with the datatype being sent over the network, so that other side knows what to expect
      */
 
     private async Task<bool> SendDataAsync(byte[] data, NetworkDataType dataType)
@@ -110,7 +115,7 @@ public class TCPClient : MonoBehaviour
             using (var writer = new DataWriter(socket.OutputStream))
             {
                 writer.ByteOrder = ByteOrder.BigEndian;
-                writer.UnicodeEncoding = UnicodeEncoding.Utf8;
+                writer.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;
                 writer.WriteInt16((short)dataType);
                 writer.WriteInt64((long)data.Length);
                 writer.WriteBytes(data);
@@ -142,8 +147,6 @@ public class TCPClient : MonoBehaviour
             int inputBufferLength = BitConverter.ToInt32(messageLengthBuffer, 0);
             inputBuffer = new byte[inputBufferLength];
             await stream.ReadAsync(inputBuffer,0, inputBufferLength);
-
-            //NetworkDataHandler.HandleNetworkData(inputBuffer);
 #endif
             return true;
         }
@@ -171,6 +174,7 @@ public class TCPClient : MonoBehaviour
         {
             if (ReceiveDataTask.IsCompleted)
             {
+                listening = false;
                 if (inputBuffer.Length == 0)
                 {
                     OnClientNotifies.Invoke("ERROR! INPUT BUFFER IS EMPTY");
@@ -179,7 +183,7 @@ public class TCPClient : MonoBehaviour
                 NetworkDataHandler.HandleNetworkData(inputBuffer);
                 inputBuffer = null;
                 ReceiveDataTask = null;
-                listening = false;
+                Listen();
             }
             else
             {
@@ -210,7 +214,21 @@ public class TCPClient : MonoBehaviour
         outputBuffer = buffer.ToArray(); outputMessageType = NetworkDataType.PointCloud;
         SendData();
     }
-#endregion    
+
+    public void SendString(string strg)
+    {
+        outputBuffer = Encoding.UTF8.GetBytes(strg);
+        outputMessageType = NetworkDataType.String;
+        SendData();
+    }
+
+    public void SendResponse(NetworkResponseType errorType)
+    {
+        outputBuffer = BitConverter.GetBytes((short)errorType);
+        outputMessageType = NetworkDataType.errorType;
+        SendData();
+    }
+    #endregion
 }
 #region Public enums
 /*
@@ -223,7 +241,7 @@ public enum NetworkDataType
     PointCloud = 2,
     Matrix = 3
 }
-public enum NetworkErrorType
+public enum NetworkResponseType
 {
     NoError = 0,
     DataCorrupt=1
@@ -251,19 +269,37 @@ public class NetworkDataHandler
 
     public static void HandleNetworkData(byte[]data)
     {
-        var packetnum = BitConverter.ToInt16(data, 0);
+        var packetnum = BitConverter.ToInt16(data, 0);        
         packets[packetnum].Invoke(data);
+
     }
 
     private static void HandleMatrix(byte[] data)
     {
-        string inputString = BitConverter.ToString(data, 2);
+        try
+        {
+            string inputString = BitConverter.ToString(data, 2);
+            client.SendResponse(NetworkResponseType.NoError);
+        }
+        catch(Exception ex)
+        {
+            client.SendResponse(NetworkResponseType.DataCorrupt);
+        }
         client.PromptMessage("Matrix Received");
     }
 
     private static void HandleString(byte[] data)
     {
-        string inputString = BitConverter.ToString(data, 2);
+        string inputString = string.Empty;
+        try 
+        { 
+            inputString = BitConverter.ToString(data, 2);
+            client.SendResponse(NetworkResponseType.NoError);
+        }
+        catch (Exception ex)
+        {
+            client.SendResponse(NetworkResponseType.DataCorrupt);
+        }
         client.PromptMessage(inputString);
     }
 
@@ -271,9 +307,9 @@ public class NetworkDataHandler
     {
         int maxErrorCount = 5;
         int errorCounter = 1;
-        switch ((NetworkErrorType)BitConverter.ToInt16(data, 2))
+        switch ((NetworkResponseType)BitConverter.ToInt16(data, 2))
         {
-            case NetworkErrorType.DataCorrupt:
+            case NetworkResponseType.DataCorrupt:
                 while (errorCounter < maxErrorCount)
                 {
                     errorCounter+=1;
@@ -281,7 +317,7 @@ public class NetworkDataHandler
                     /* Here, Client sends the data previously encoded into bytes only once,
                      * with the hope that encoding is correct and the data is lost only in the network, not while encoding
                      */
-                    client.SendData();                    
+                    client.SendData();
                 }
                 break;
         }
