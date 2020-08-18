@@ -39,8 +39,7 @@ public class TCPClient : MonoBehaviour
     bool messagePrepared = false;
     string clientMessage;
     private void Update()
-    {
-        //Listen();
+    {        
         if (OnClientNotifies != null && messagePrepared)
         {
             messagePrepared = false;
@@ -115,9 +114,9 @@ public class TCPClient : MonoBehaviour
             using (var writer = new DataWriter(socket.OutputStream))
             {
                 writer.ByteOrder = ByteOrder.BigEndian;
-                writer.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;
-                writer.WriteInt16((short)dataType);
+                writer.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;                
                 writer.WriteInt64((long)data.Length);
+                writer.WriteInt16((short)dataType);
                 writer.WriteBytes(data);
 
                 await writer.StoreAsync();
@@ -203,12 +202,19 @@ public class TCPClient : MonoBehaviour
         int step = chunkSize;
         int chunks = vertices.Count / step;
 
+        buffer.AddRange(BitConverter.GetBytes(step));
+        buffer.AddRange(BitConverter.GetBytes(chunks));
+
         for (int i = 0; i < chunks * step; i += step)
         {
             for (int j = i; j < i + step; j++)
             {
-                buffer.AddRange(BitConverter.GetBytes(vertices[j].x)); buffer.AddRange(BitConverter.GetBytes(vertices[j].y)); buffer.AddRange(BitConverter.GetBytes(vertices[j].z));
-                buffer.AddRange(BitConverter.GetBytes(normals[j].x)); buffer.AddRange(BitConverter.GetBytes(normals[j].y)); buffer.AddRange(BitConverter.GetBytes(normals[j].z));
+                buffer.AddRange(BitConverter.GetBytes((double)vertices[j].x));
+                buffer.AddRange(BitConverter.GetBytes((double)vertices[j].y));
+                buffer.AddRange(BitConverter.GetBytes((double)vertices[j].z));
+                buffer.AddRange(BitConverter.GetBytes((double) normals[j].x));
+                buffer.AddRange(BitConverter.GetBytes((double) normals[j].y));
+                buffer.AddRange(BitConverter.GetBytes((double) normals[j].z));
             }
         }
         outputBuffer = buffer.ToArray(); outputMessageType = NetworkDataType.PointCloud;
