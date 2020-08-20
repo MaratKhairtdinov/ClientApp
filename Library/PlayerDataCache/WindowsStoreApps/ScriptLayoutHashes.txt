@@ -1,6 +1,6 @@
 WindowsStoreApps
 PlayerPath?
-C:/Users/Marat/Documents/Thesis/Build
+D:/Marat/Thesis/Thesis/Build
 SceneListBegin?
 Assets/Scenes/MainScene.unity
 SceneListEnd?
@@ -122,7 +122,6 @@ edf06f5ca55f4089ea5821139bf6af0b Assembly-CSharp.dll:HoloToolkit.Unity.UX.AppBar
 71bb6a6b6c8f052f948db64c7dd3ca4f Assembly-CSharp.dll:HoloToolkit.Sharing.DefaultSyncModelAccessor
 516a43910ee2f27e5c10bde3c2bc0c84 Assembly-CSharp.dll:HoloToolkit.Unity.UX.LineUnity
 d67a97d5b4f3f0d1fd584ceb4307b60d Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.MixedRealityCameraManager
-b266c40c7e8055c52647860ae42ca1e9 Assembly-CSharp.dll:.TCPClient
 2d0d9a0d4af33003effaacddfee4bd28 Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.FileSurfaceObserver
 d08e71ed6a0c391c105577b6b6166bd3 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.XboxControllerHandlerBase
 d7b84368bb93b262889f5efcd401345e Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.RemoteMeshTarget
@@ -504,3 +503,4 @@ fe10de86e42ce80dc24cf76ac1c87c2a Vuforia.UnityExtensions.dll:Vuforia.VuforiaConf
 69167579cf7fcbb2676fc1e675963dcd Vuforia.UnityExtensions.dll:Vuforia.VuMarkBehaviour
 fbbf64dcbe0662e3eda1dec45ea8f895 Vuforia.UnityExtensions.dll:Vuforia.WireframeBehaviour
 71bb6a6b6c8f052f948db64c7dd3ca4f Vuforia.UnityExtensions.dll:Vuforia.WireframeTrackableEventHandler
+5fa2ab290dc00936710ffbb08a4f6c96 Assembly-CSharp.dll:.TCPClient

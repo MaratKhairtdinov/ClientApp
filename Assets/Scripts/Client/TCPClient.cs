@@ -16,9 +16,9 @@ using Windows.Storage.Streams;
 public class TCPClient : MonoBehaviour
 {   
     [SerializeField] public VertexCollector collector;    
-    [SerializeField] public string message;
+    //[SerializeField] public string message;
 
-    [SerializeField] public string receivedMessage = "";
+    //[SerializeField] public string receivedMessage = "";
 
     string serverErrorLog = string.Empty;
 
@@ -27,11 +27,15 @@ public class TCPClient : MonoBehaviour
 #if !UNITY_EDITOR
     Windows.Networking.Sockets.StreamSocket ClientSocket;
 #endif
+
+    public int chunkSize = 1024;
+
     public ClientEvent GUILog;
 
     public ClientEvent OnHostSet;
 
-    [SerializeField] public string errorLog;
+    
+
 
     List<Vector3> vertices;
     List<Vector3> normals;
@@ -113,7 +117,7 @@ public class TCPClient : MonoBehaviour
 
     byte[] outputData;
     NetworkDataType outputDataType;
-    public int chunkSize = 1024;
+    
     public async Task SendDataAsync()
     {
         try
@@ -209,31 +213,26 @@ public class TCPClient : MonoBehaviour
         }
         catch (Exception e)
         {
-            PromptMessage(e.ToString());           
-        }
-        
+            PromptMessage(e.ToString());
+        }        
     }
 
-    bool errorPrompted = false;
     bool messagePrompted = false;
+    private string message;
     private void Update()
     {
-        if (errorPrompted)
+        if (messagePrompted)
         {
-            GUILog.Invoke(errorLog);
-            errorPrompted = false;
+            GUILog.Invoke(message);
+            messagePrompted = false;
         }
-        if (receivedMessage.Length!=0 && !messagePrompted)
-        {
-            messagePrompted = true;
-            GUILog.Invoke(receivedMessage);
-        }
+
     }
 
     public void PromptMessage(string message)
     {
-        errorLog = message;
-        errorPrompted = true;
+        this.message = message;
+        messagePrompted = true;
     }
 
 }
@@ -282,6 +281,7 @@ public class NetworkHandler
         switch (response)
         {
             case NetworkResponseType.AllGood:
+                client.PromptMessage("Server received data");
                 break;
             case NetworkResponseType.DataCorrupt:
                 for(int i = 0; i<trials; i++)

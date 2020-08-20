@@ -794,12 +794,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 333752072}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a16709e214d203148b6022bc3edc82c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 6f0ccab625a7a4847aded32467b71b22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   collector: {fileID: 1351013097}
-  message: Hello Server!
-  receivedMessage: 
   host: 192.168.0.100
   port: 10000
   GUILog:
@@ -830,7 +828,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  errorLog: 
   chunkSize: 1024
 --- !u!4 &333752074
 Transform:
