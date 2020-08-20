@@ -230,7 +230,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputString: 
-  client: {fileID: 333752073}
 --- !u!114 &95633135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -283,7 +282,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -479,7 +478,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputString: 
-  client: {fileID: 333752073}
 --- !u!114 &236745022
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -532,7 +530,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -650,7 +648,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputString: 
-  client: {fileID: 333752073}
 --- !u!114 &311111039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -703,7 +700,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -781,7 +778,6 @@ GameObject:
   m_Component:
   - component: {fileID: 333752074}
   - component: {fileID: 333752073}
-  - component: {fileID: 333752075}
   m_Layer: 0
   m_Name: Client
   m_TagString: Untagged
@@ -796,13 +792,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 333752072}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a16709e214d203148b6022bc3edc82c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   collector: {fileID: 1351013097}
-  messageType: 0
   message: Hello Server!
   receivedMessage: 
   host: 192.168.0.100
@@ -836,6 +831,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   errorLog: 
+  chunkSize: 1024
 --- !u!4 &333752074
 Transform:
   m_ObjectHideFlags: 0
@@ -850,36 +846,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &333752075
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 333752072}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f0ccab625a7a4847aded32467b71b22, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  collector: {fileID: 1351013097}
-  chunkSize: 100
-  hostAddress: 192.168.0.100
-  port: 10000
-  OnClientNotifies:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 809613381}
-        m_MethodName: SetText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!1 &362965837
 GameObject:
   m_ObjectHideFlags: 0
@@ -1013,7 +979,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputString: 
-  client: {fileID: 333752073}
 --- !u!1 &452604178
 GameObject:
   m_ObjectHideFlags: 0
@@ -1142,7 +1107,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputString: 
-  client: {fileID: 333752073}
 --- !u!114 &553268534
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1195,7 +1159,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1482,7 +1446,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputString: 
-  client: {fileID: 333752073}
 --- !u!114 &669587847
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1535,7 +1498,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1829,7 +1792,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputString: 
-  client: {fileID: 333752073}
 --- !u!114 &792900399
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1882,7 +1844,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2092,7 +2054,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputString: 
-  client: {fileID: 333752073}
 --- !u!114 &840500146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2145,7 +2106,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2763,7 +2724,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2977,7 +2938,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3231,7 +3192,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3465,7 +3426,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 362965840}
-        m_MethodName: HandleEvent
+        m_MethodName: HandleButton
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

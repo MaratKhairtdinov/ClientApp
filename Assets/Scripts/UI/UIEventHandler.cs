@@ -1,4 +1,5 @@
-﻿using HoloToolkit.Unity.SpatialMapping;
+﻿using HoloToolkit.UI.Keyboard;
+using HoloToolkit.Unity.SpatialMapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,7 +8,8 @@ using UnityEngine.Events;
 
 public class UIEventHandler : MonoBehaviour
 {
-    public NewTcpClient client;
+    //public TCPClient newClient;
+    public TCPClient client;
     public VertexCollector collector;
     public SpatialMappingObserver spatialMappingObserver;
     public Counter counter;
@@ -19,16 +21,15 @@ public class UIEventHandler : MonoBehaviour
         switch (buttonType)
         {
             case ButtonType.Connect:
-                client.Connect();
+                client.Connect();                
                 break;
             case ButtonType.SendHello:
-                client.SendMessage();
+                client.SendString("Pizza pepperroncino is ready, stronzi");
                 break;
             case ButtonType.CollectVertices:
                 collector.Collect();
                 break;
             case ButtonType.SendPointcloud:
-                client.SendPCD();
                 break;
             case ButtonType.SetHost:
                 keyboardInput.OnKeyboardCalled();

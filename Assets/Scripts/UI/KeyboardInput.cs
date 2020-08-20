@@ -6,7 +6,7 @@ public class KeyboardInput : MonoBehaviour
 {
     TouchScreenKeyboard keyboard;
     [SerializeField] public string inputString = string.Empty;
-    [SerializeField] public NewTcpClient client;
+    //[SerializeField] public TCPClient client;
 
     public void OnKeyboardCalled()
     {        

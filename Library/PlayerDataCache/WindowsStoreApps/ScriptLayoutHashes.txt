@@ -1,6 +1,6 @@
 WindowsStoreApps
 PlayerPath?
-D:/Marat/Thesis/Thesis/Build
+C:/Users/Marat/Documents/Thesis/Build
 SceneListBegin?
 Assets/Scenes/MainScene.unity
 SceneListEnd?
@@ -122,7 +122,7 @@ edf06f5ca55f4089ea5821139bf6af0b Assembly-CSharp.dll:HoloToolkit.Unity.UX.AppBar
 71bb6a6b6c8f052f948db64c7dd3ca4f Assembly-CSharp.dll:HoloToolkit.Sharing.DefaultSyncModelAccessor
 516a43910ee2f27e5c10bde3c2bc0c84 Assembly-CSharp.dll:HoloToolkit.Unity.UX.LineUnity
 d67a97d5b4f3f0d1fd584ceb4307b60d Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.MixedRealityCameraManager
-360f3ec89da5d8f499073fa33c98734c Assembly-CSharp.dll:.NewTcpClient
+b266c40c7e8055c52647860ae42ca1e9 Assembly-CSharp.dll:.TCPClient
 2d0d9a0d4af33003effaacddfee4bd28 Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.FileSurfaceObserver
 d08e71ed6a0c391c105577b6b6166bd3 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.XboxControllerHandlerBase
 d7b84368bb93b262889f5efcd401345e Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.RemoteMeshTarget
@@ -277,7 +277,6 @@ c3eafe1e414c96a9c61c228aff4e5e7c Assembly-CSharp.dll:.DisplayDependentObjectActi
 b3ab2106268377ffe25dd18ac23dca28 Unity.TextMeshPro.dll:TMPro.TMP_Asset
 d496440965525cf443f14ba0d08cb1ba Assembly-CSharp.dll:HoloToolkit.Unity.UX.DistorterGravity
 13c6a912c560c2bff3a79ca69f41cb15 Assembly-CSharp.dll:HoloToolkit.Unity.Buttons.MeshButton
-d74d9e6592a8d803e3b00aa0c30f2c0a Assembly-CSharp.dll:.TCPClient
 7bd0b8190b45177808bef6848a757f7c Assembly-CSharp.dll:HoloToolkit.UX.ToolTips.ToolTipConnector
 5dab0f65635a81318516e3830db29248 Assembly-CSharp.dll:HoloToolkit.Unity.Buttons.ButtonMeshProfile
 71bb6a6b6c8f052f948db64c7dd3ca4f Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.SpatialMappingSource
@@ -291,6 +290,20 @@ cd8adc36d331f2ed5ffac2f6ea5320d2 Assembly-CSharp.dll:HoloToolkit.Unity.FadeManag
 6ef408f72e07c12078d2fde4558043c3 Assembly-CSharp.dll:HoloToolkit.UX.Progress.ProgressIndicator
 71bb6a6b6c8f052f948db64c7dd3ca4f Assembly-CSharp.dll:HoloToolkit.Unity.DebugPanel
 71bb6a6b6c8f052f948db64c7dd3ca4f Unity.TextMeshPro.dll:TMPro.TMP_SpriteAnimator
+e6ae40841db498b6e673877ac45ad208 UnityEngine.Networking.dll:UnityEngine.Networking.NetworkAnimator
+71bb6a6b6c8f052f948db64c7dd3ca4f UnityEngine.Networking.dll:UnityEngine.Networking.NetworkBehaviour
+1dcb82730d983b77cec736c6ef19f814 UnityEngine.Networking.dll:UnityEngine.Networking.NetworkDiscovery
+eafb77726b67b7571818a7210a3ce11e UnityEngine.Networking.dll:UnityEngine.Networking.NetworkIdentity
+265cf27ba050d55ff33a8acab4ded6c0 UnityEngine.Networking.dll:UnityEngine.Networking.NetworkLobbyManager
+5bd9a19c7b5f76c563418e28f48a561b UnityEngine.Networking.dll:UnityEngine.Networking.NetworkLobbyPlayer
+21e871d89bbce53c038fc75ad1b7c7f3 UnityEngine.Networking.dll:UnityEngine.Networking.NetworkManager
+e0ee4b3d4e27318934cc940a969d3d96 UnityEngine.Networking.dll:UnityEngine.Networking.NetworkManagerHUD
+318c6c13a19c9fac98135ae14889de1b UnityEngine.Networking.dll:UnityEngine.Networking.NetworkMigrationManager
+3f0b469d844365c00a63de0437c9b29e UnityEngine.Networking.dll:UnityEngine.Networking.NetworkProximityChecker
+71bb6a6b6c8f052f948db64c7dd3ca4f UnityEngine.Networking.dll:UnityEngine.Networking.NetworkStartPosition
+ad9173d3a69d99153f38ed4b62226129 UnityEngine.Networking.dll:UnityEngine.Networking.NetworkTransform
+9b895dcabbc1faf095c000c32d471fd0 UnityEngine.Networking.dll:UnityEngine.Networking.NetworkTransformChild
+5887ef1bc706b22b773d253fd443ceef UnityEngine.Networking.dll:UnityEngine.Networking.NetworkTransformVisualizer
 83b932dd6d6a66e44dc24c56a11941e5 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.HandGuidance
 3ca4ea8f2b886a3e371f89e6fdd41bca Assembly-CSharp.dll:HoloToolkit.Unity.StabilizationPlaneModifier
 71bb6a6b6c8f052f948db64c7dd3ca4f Assembly-CSharp.dll:HoloToolkit.Unity.CalibrationSpace
@@ -339,7 +352,7 @@ da6b5856ef7e0c35bd2435307396d87e Assembly-CSharp.dll:HoloToolkit.Examples.UX.Obj
 e3bb88506cbb15be50c6c2d4c1bebfba Assembly-CSharp.dll:HoloToolkit.Unity.WorldAnchorManager
 e1300922cc039f41ab46a47f4cb05898 Unity.TextMeshPro.dll:TMPro.TMP_Settings
 618946f7490f711e5e5f953fdbcd23dc Assembly-CSharp.dll:.Counter
-c0f0e0f7b8bdd97d70159929785b1ca3 Assembly-CSharp.dll:.UIEventHandler
+003daed9aac03a846879d7d157791612 Assembly-CSharp.dll:.UIEventHandler
 289f18ca40f22327a68155d13baf7fd0 Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.RemoteMappingManager
 52d8f17242fae73da00659e5a3ba5b24 Assembly-CSharp.dll:HoloToolkit.UX.ToolTips.ToolTipSpawner
 cc491dfcd44f839e74d1bbebf886d3c1 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.SimpleSinglePointerSelector
@@ -394,7 +407,7 @@ a54b43a1512d107b04390db557a4da94 Assembly-CSharp.dll:HoloToolkit.UX.Buttons.Dial
 c95f13dabf96f7e8ce9a0a5da6492c70 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.FocusManager
 25d1aca7b790ab6141cfb844606948d7 Assembly-CSharp.dll:HoloToolkit.UI.Keyboard.SymbolDisableHighlight
 0b8452f08371dba982169a52e6b9f8ad Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.CustomInputControl
-57e452d4d26ee48dbd86c59b661772b3 Assembly-CSharp.dll:.KeyboardInput
+89ec531a0aa8a1438a2f814b62bbd5cb Assembly-CSharp.dll:.KeyboardInput
 9b900730e3a88891364bc31db7e7ef90 Assembly-CSharp.dll:HoloToolkit.Unity.ToggleDebugWindow
 afd7f340c69c11c3ff15ea797c623931 Assembly-CSharp.dll:HoloToolkit.UX.ToolTips.ToolTipBackgroundCorners
 71bb6a6b6c8f052f948db64c7dd3ca4f Assembly-CSharp.dll:HoloToolkit.Sharing.TransformSynchronizer
