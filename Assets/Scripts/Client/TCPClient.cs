@@ -46,6 +46,7 @@ public class TCPClient : MonoBehaviour
         {
             OnHostSet.Invoke("Host: " + host);
         }
+        NetworkHandler.client = this;
     }
 
     public void Connect()
@@ -146,7 +147,7 @@ public class TCPClient : MonoBehaviour
                 {
                     writer.WriteBytes(outputBuffer.GetRange(i, chunkSize).ToArray());
                     
-                    //Thread.Sleep(5);
+                    Thread.Sleep(5);
                 }
 
                 writer.WriteBytes(outputBuffer.GetRange(chunks*chunkSize, residual).ToArray());
@@ -156,37 +157,13 @@ public class TCPClient : MonoBehaviour
                 await writer.StoreAsync();
                 await writer.FlushAsync();
                 writer.DetachStream();
-
-                /*
-                switch(messageType)
-                {
-                    case 1:
-                        writer.WriteInt64(writer.MeasureString(message));
-                        writer.WriteString(message);
-                        break;
-                    case 2:
-                        int step = 100;
-                        int chunks = vertices.Count/step;
-                        writer.WriteInt64(chunks);
-                        writer.WriteInt64(step);
-                        for(int i = 0; i < chunks*step; i+=step)
-                        {
-                            for(int j = i; j<i+step; j++)
-                            {
-                                writer.WriteDouble((double)vertices[j].x); writer.WriteDouble((double)vertices[j].y); writer.WriteDouble((double)vertices[j].z);
-                                writer.WriteDouble((double)normals[j].x);  writer.WriteDouble((double)normals[j].y);  writer.WriteDouble((double)normals[j].z);
-                            }
-                            //PromptMessage(string.Format("Chunk #{0} sent", i/step));
-                        }
-                        break;
-                }            
-                */
             }
 #endif
         }
         catch (Exception e)
         {
-            PromptMessage(e.ToString());            
+            PromptMessage(e.ToString());        
+            
         }
     }
 
@@ -195,26 +172,75 @@ public class TCPClient : MonoBehaviour
     NetworkDataType inputType;
     byte[] inputBuffer;
     public async Task ReceiveDataAsync()
-    {        
+    {
+        string errorLog = string.Empty;
+
+#if !UNITY_EDITOR
+
+        var stream = ClientSocket.InputStream.AsStreamForRead();
+            
+        byte[] inputDataTypeBuffer = new byte[2];
+        byte[] inputLengthBuffer = new byte[4];
+        try
+        {            
+            await stream.ReadAsync(inputDataTypeBuffer, 0, 2);  
+            inputType = (NetworkDataType)BitConverter.ToInt16(inputDataTypeBuffer, 0);
+            errorLog += "message of type "+inputType+" received\n";
+            //PromptMessage("message of type "+inputType+" received");
+        }
+        catch(Exception e)
+        {
+            errorLog +="InputDataType isn't received\n";
+            //PromptMessage(errorLog);
+            //return;
+        }
         try
         {
-#if !UNITY_EDITOR
-            var stream = ClientSocket.InputStream.AsStreamForRead();
-            
-            byte[] inputDataTypeBuffer = new byte[2];
-            byte[] inputLengthBuffer = new byte[8];
-            await stream.ReadAsync(inputDataTypeBuffer, 0, 2);
-            await stream.ReadAsync(inputLengthBuffer, 0, 8);
-            
-            inputBuffer = new byte[BitConverter.ToInt64(inputLengthBuffer, 8)];
-            await stream.ReadAsync(inputBuffer, 0, inputBuffer.Length);
-            NetworkHandler.HandleData(inputBuffer, inputType);
-#endif
+            await stream.ReadAsync(inputLengthBuffer, 0, 4);
         }
-        catch (Exception e)
+        catch(Exception e)
         {
-            PromptMessage(e.ToString());
-        }        
+            errorLog +="InputDataLength isn't received\n";            
+            //PromptMessage(errorLog);
+            //return;
+        }            
+        try
+        {
+            var inputLength = BitConverter.ToInt32(inputLengthBuffer, 0);
+            inputBuffer = new byte[inputLength];
+            errorLog += "Input buffer is " + inputLength +" bytes long\n";
+            //PromptMessage("Input buffer is " + inputLength +" bytes long");
+        }
+        catch(Exception e)
+        {
+            errorLog += e.ToString();
+            //PromptMessage(errorLog);
+            //return;
+        }
+        try
+        {
+            await stream.ReadAsync(inputBuffer, 0, inputBuffer.Length);
+        }
+        catch(Exception e)
+        {
+            errorLog +="Couldnt receive buffer";
+            //PromptMessage(errorLog);
+            //return;
+        }
+        try
+        {
+            var response = (NetworkResponseType)BitConverter.ToInt16(inputBuffer,0);
+            errorLog+="Response is of type "+response+"\n";
+            NetworkHandler.HandleData(inputBuffer, inputType);
+        }
+        catch(Exception e)
+        {
+            errorLog +="Couldn't handle data";
+            //PromptMessage(errorLog);
+            //return;
+        }
+#endif
+        //PromptMessage(errorLog);
     }
 
     bool messagePrompted = false;
@@ -226,7 +252,6 @@ public class TCPClient : MonoBehaviour
             GUILog.Invoke(message);
             messagePrompted = false;
         }
-
     }
 
     public void PromptMessage(string message)
@@ -245,7 +270,7 @@ public class NetworkHandler
     public static TCPClient client;
     public delegate void Packet(byte[] data);
     public static Dictionary<int, Packet> handlers;
-    public static int trials;
+    public static int trials = 5;
 
     private static byte[] lastBuffSent;
     private static NetworkDataType lastDataTypeSent;
@@ -267,7 +292,16 @@ public class NetworkHandler
 
     public static void HandleData(byte[] data, NetworkDataType type)
     {
-        handlers[(int)type].Invoke(data);
+        //handlers[(int)type].Invoke(data);
+        switch (type)
+        {
+            case NetworkDataType.Response:
+                HandleResponse(data);
+                break;
+            case NetworkDataType.String:
+                HandleString(data);
+                break;
+        }
     }
 
     public static void HandleString(byte[] data)
@@ -275,6 +309,8 @@ public class NetworkHandler
         client.PromptMessage(Encoding.UTF8.GetString(data, 0, data.Length));
     }
 
+
+    static int counter = 0;
     public static void HandleResponse(byte[] data)
     {
         var response = (NetworkResponseType)BitConverter.ToInt16(data,0);
@@ -284,10 +320,18 @@ public class NetworkHandler
                 client.PromptMessage("Server received data");
                 break;
             case NetworkResponseType.DataCorrupt:
-                for(int i = 0; i<trials; i++)
+                //for(int i = 0; i<trials; i++)
+                //{
+                if (counter<trials) 
                 {
-                    client.SendData(lastBuffSent, lastDataTypeSent);
+                    //client.SendData(lastBuffSent, lastDataTypeSent); 
                 }
+                else
+                {
+                    counter = 0;
+                    //client.PromptMessage("Maximal amount of trials reached, some problem is in the network");
+                }
+                //}
                 break;
         }
     }

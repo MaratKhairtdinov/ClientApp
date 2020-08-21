@@ -798,8 +798,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   collector: {fileID: 1351013097}
-  host: 192.168.0.100
+  host: 192.168.0.101
   port: 10000
+  chunkSize: 1024
   GUILog:
     m_PersistentCalls:
       m_Calls:
@@ -828,7 +829,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  chunkSize: 1024
 --- !u!4 &333752074
 Transform:
   m_ObjectHideFlags: 0
@@ -888,7 +888,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0.5, y: 0.3}
+  m_SizeDelta: {x: 0.5, y: 0.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &362965839
 MonoBehaviour:
@@ -1998,8 +1998,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.0000076293945, y: -0.06999999}
-  m_SizeDelta: {x: 499.5, y: 140}
+  m_AnchoredPosition: {x: 0.0000076293945, y: -0.16985}
+  m_SizeDelta: {x: 499.5, y: 340}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &840500143
 GameObject:
