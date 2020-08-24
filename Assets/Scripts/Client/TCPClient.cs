@@ -126,10 +126,12 @@ public class TCPClient : MonoBehaviour
         await ReceiveDataAsync();
     }
 
-
     List<byte> outputData;
     NetworkDataType outputDataType;
     byte[] chunk;
+    int chunks, residual;
+    int chunksSent = 0; int chunksSentPrev = 0;
+    public LoadingBarEvent OnLoadData;
 
     public async Task SendDataAsync()
     {
@@ -141,10 +143,8 @@ public class TCPClient : MonoBehaviour
                 writer.ByteOrder = ByteOrder.BigEndian;
                 writer.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;
 
-                int chunks = outputData.Count/chunkSize;
-                int residual = outputData.Count%chunkSize;
-
-                
+                chunks = outputData.Count/chunkSize;
+                residual = outputData.Count%chunkSize;
 
                 /*
                  *Header of the package so that the other side knows how much and what kind of data to receive
@@ -155,43 +155,37 @@ public class TCPClient : MonoBehaviour
                 writer.WriteInt32(residual);
 
                 var stream = ClientSocket.InputStream.AsStreamForRead();
-
+                NetworkHandler.SaveLastPackage(outputData, outputDataType);
+                byte[] response_buffer = new byte[2];
+                NetworkResponseType response;
                 for(int i = 0; i < chunks; i++)
                 {
-                    byte[] response_buffer = new byte[2];
                     bool chunk_received = false;
-                    Thread.Sleep(1000);
-                    while(!chunk_received)
-                    {                        
-                        NetworkResponseType response = NetworkResponseType.DataCorrupt;
-                        if(response == NetworkResponseType.AllGood)
-                        {
-                            chunk_received = true; 
-                            PromptMessage("Chunk #"+i+" sent");
-                        }
-                        else
-                        {
-                            writer.WriteBytes(outputData.GetRange(i*chunkSize, chunkSize).ToArray());
-                            await writer.StoreAsync();
-                            await writer.FlushAsync();
-                            
-                        }
+                    response = NetworkResponseType.DataCorrupt;
+                    while(response == NetworkResponseType.DataCorrupt)
+                    {
+                        writer.WriteBytes(outputData.GetRange(i*chunkSize, chunkSize).ToArray());
+                        await writer.StoreAsync();
+                        await writer.FlushAsync();
                         await stream.ReadAsync(response_buffer, 0, 2);
                         response = (NetworkResponseType)BitConverter.ToInt16(response_buffer, 0);
-                        
                     }
-
+                    chunksSent+=1;
+                    PromptMessage("Progress: "+(i+1)+" chunks of "+chunks+" sent");
                 }
-
-                writer.WriteBytes(outputData.GetRange(chunks*chunkSize, residual).ToArray());
-
-                PromptMessage("Data Sent to the server, buffer size is "+ outputData.Count);
-                NetworkHandler.SaveLastPackage(outputData, outputDataType);
-
+                response = NetworkResponseType.DataCorrupt;
+                while(response == NetworkResponseType.DataCorrupt)
+                {
+                    writer.WriteBytes(outputData.GetRange(chunks*chunkSize, residual).ToArray());
+                    await writer.StoreAsync();
+                    await writer.FlushAsync();
+                    await stream.ReadAsync(response_buffer, 0, 2);
+                    response = (NetworkResponseType)BitConverter.ToInt16(response_buffer, 0);
+                }
                 outputData.Clear();
-                await writer.StoreAsync();
-                await writer.FlushAsync();
                 writer.DetachStream();
+                chunksSent = 0;
+                chunksSentPrev = 0;
             }
 #endif
         }
@@ -227,6 +221,11 @@ public class TCPClient : MonoBehaviour
     private string message;
     private void Update()
     {
+        if (chunksSent > chunksSentPrev)
+        {
+            chunksSentPrev = chunksSent;
+            OnLoadData.Invoke(chunks, chunksSent);
+        }        
         if (messagePrompted)
         {
             GUILog.Invoke(message);
@@ -300,7 +299,7 @@ public class NetworkHandler
                 client.PromptMessage("Server received data");
                 break;
             case NetworkResponseType.DataCorrupt:
-                if (counter<trials) 
+                if (counter<trials)
                 {
                     counter += 1;
                     client.SendData(lastBuffSent, lastDataTypeSent); 
