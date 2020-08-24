@@ -24,12 +24,13 @@ public class UIEventHandler : MonoBehaviour
                 client.Connect();                
                 break;
             case ButtonType.SendHello:
-                client.SendString("Pizza pepperroncino is ready, stronzi");
+                client.SendString("Message to check");
                 break;
             case ButtonType.CollectVertices:
                 collector.Collect();
                 break;
             case ButtonType.SendPointcloud:
+                client.SendPointCloud();
                 break;
             case ButtonType.SetHost:
                 keyboardInput.OnKeyboardCalled();

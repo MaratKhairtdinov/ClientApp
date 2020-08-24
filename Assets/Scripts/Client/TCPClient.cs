@@ -8,6 +8,7 @@ using UnityEngine.Networking;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Text;
+using System.Linq;
 
 #if !UNITY_EDITOR
 using Windows.Storage.Streams;
@@ -15,10 +16,7 @@ using Windows.Storage.Streams;
 
 public class TCPClient : MonoBehaviour
 {   
-    [SerializeField] public VertexCollector collector;    
-    //[SerializeField] public string message;
-
-    //[SerializeField] public string receivedMessage = "";
+    [SerializeField] public VertexCollector collector;        
 
     string serverErrorLog = string.Empty;
 
@@ -33,9 +31,6 @@ public class TCPClient : MonoBehaviour
     public ClientEvent GUILog;
 
     public ClientEvent OnHostSet;
-
-    
-
 
     List<Vector3> vertices;
     List<Vector3> normals;
@@ -55,11 +50,12 @@ public class TCPClient : MonoBehaviour
         NetworkHandler.InitializePackages();
         NetworkHandler.trials = 5;
         GUILog.Invoke("Connected to server");
+        SendString("Hello server");
     }
 
     public void SendString(string strg)
-    {                
-        SendData(Encoding.UTF8.GetBytes(strg), NetworkDataType.String);
+    {   
+        SendData(Encoding.UTF8.GetBytes(strg).ToList<byte>(), NetworkDataType.String);
     }   
 
 
@@ -99,26 +95,42 @@ public class TCPClient : MonoBehaviour
     }
 
     Task sendTask;
-    public void SendData(byte[] data, NetworkDataType type)
+    public void SendData(List<byte> data, NetworkDataType type)
     {
-        if (sendTask==null || sendTask.IsCompleted)
-        {
+        //if (sendTask==null || sendTask.IsCompleted)
+        //{
             outputData = data; outputDataType = type;
-            //sendTask = Task.Run(() => SendDataAsync());            
             sendTask = Task.Run(() => ExchangeDataAsync());
+        //}
+    }
+
+    public void SendPointCloud()
+    {
+        var vertices = collector.GetVertices();
+        var normals  = collector.GetNormals();
+        List<byte> data = new List<byte>();
+        data.AddRange(BitConverter.GetBytes(vertices.Count));
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            data.AddRange(BitConverter.GetBytes(vertices[i].x)); data.AddRange(BitConverter.GetBytes(vertices[i].y)); data.AddRange(BitConverter.GetBytes(vertices[i].z));
+            data.AddRange(BitConverter.GetBytes(normals[i].x));  data.AddRange(BitConverter.GetBytes(normals[i].y));  data.AddRange(BitConverter.GetBytes(normals[i].z));
         }
+        
+        SendData(data, NetworkDataType.PointCloud);
+        PromptMessage("Pointcloud sent to the server");
     }
 
     public async Task ExchangeDataAsync()
     {
-        await SendDataAsync();
+        await SendDataAsync();        
         await ReceiveDataAsync();
     }
 
 
-    byte[] outputData;
+    List<byte> outputData;
     NetworkDataType outputDataType;
-    
+    byte[] chunk;
+
     public async Task SendDataAsync()
     {
         try
@@ -129,9 +141,10 @@ public class TCPClient : MonoBehaviour
                 writer.ByteOrder = ByteOrder.BigEndian;
                 writer.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;
 
-                int chunks = outputData.Length/chunkSize;
-                int residual = outputData.Length%chunkSize;                
+                int chunks = outputData.Count/chunkSize;
+                int residual = outputData.Count%chunkSize;
 
+                
 
                 /*
                  *Header of the package so that the other side knows how much and what kind of data to receive
@@ -141,19 +154,41 @@ public class TCPClient : MonoBehaviour
                 writer.WriteInt32(chunks);
                 writer.WriteInt32(residual);
 
-                var outputBuffer = new List<byte>(); outputBuffer.AddRange(outputData);
+                var stream = ClientSocket.InputStream.AsStreamForRead();
 
-                for(int i = 0; i < chunks; i+=chunkSize)
+                for(int i = 0; i < chunks; i++)
                 {
-                    writer.WriteBytes(outputBuffer.GetRange(i, chunkSize).ToArray());
-                    
-                    Thread.Sleep(5);
+                    byte[] response_buffer = new byte[2];
+                    bool chunk_received = false;
+                    Thread.Sleep(1000);
+                    while(!chunk_received)
+                    {                        
+                        NetworkResponseType response = NetworkResponseType.DataCorrupt;
+                        if(response == NetworkResponseType.AllGood)
+                        {
+                            chunk_received = true; 
+                            PromptMessage("Chunk #"+i+" sent");
+                        }
+                        else
+                        {
+                            writer.WriteBytes(outputData.GetRange(i*chunkSize, chunkSize).ToArray());
+                            await writer.StoreAsync();
+                            await writer.FlushAsync();
+                            
+                        }
+                        await stream.ReadAsync(response_buffer, 0, 2);
+                        response = (NetworkResponseType)BitConverter.ToInt16(response_buffer, 0);
+                        
+                    }
+
                 }
 
-                writer.WriteBytes(outputBuffer.GetRange(chunks*chunkSize, residual).ToArray());
+                writer.WriteBytes(outputData.GetRange(chunks*chunkSize, residual).ToArray());
 
+                PromptMessage("Data Sent to the server, buffer size is "+ outputData.Count);
                 NetworkHandler.SaveLastPackage(outputData, outputDataType);
 
+                outputData.Clear();
                 await writer.StoreAsync();
                 await writer.FlushAsync();
                 writer.DetachStream();
@@ -162,8 +197,7 @@ public class TCPClient : MonoBehaviour
         }
         catch (Exception e)
         {
-            PromptMessage(e.ToString());        
-            
+            PromptMessage(e.ToString());
         }
     }
 
@@ -173,74 +207,20 @@ public class TCPClient : MonoBehaviour
     byte[] inputBuffer;
     public async Task ReceiveDataAsync()
     {
-        string errorLog = string.Empty;
-
 #if !UNITY_EDITOR
-
         var stream = ClientSocket.InputStream.AsStreamForRead();
-            
+
         byte[] inputDataTypeBuffer = new byte[2];
         byte[] inputLengthBuffer = new byte[4];
-        try
-        {            
-            await stream.ReadAsync(inputDataTypeBuffer, 0, 2);  
-            inputType = (NetworkDataType)BitConverter.ToInt16(inputDataTypeBuffer, 0);
-            errorLog += "message of type "+inputType+" received\n";
-            //PromptMessage("message of type "+inputType+" received");
-        }
-        catch(Exception e)
-        {
-            errorLog +="InputDataType isn't received\n";
-            //PromptMessage(errorLog);
-            //return;
-        }
-        try
-        {
-            await stream.ReadAsync(inputLengthBuffer, 0, 4);
-        }
-        catch(Exception e)
-        {
-            errorLog +="InputDataLength isn't received\n";            
-            //PromptMessage(errorLog);
-            //return;
-        }            
-        try
-        {
-            var inputLength = BitConverter.ToInt32(inputLengthBuffer, 0);
-            inputBuffer = new byte[inputLength];
-            errorLog += "Input buffer is " + inputLength +" bytes long\n";
-            //PromptMessage("Input buffer is " + inputLength +" bytes long");
-        }
-        catch(Exception e)
-        {
-            errorLog += e.ToString();
-            //PromptMessage(errorLog);
-            //return;
-        }
-        try
-        {
-            await stream.ReadAsync(inputBuffer, 0, inputBuffer.Length);
-        }
-        catch(Exception e)
-        {
-            errorLog +="Couldnt receive buffer";
-            //PromptMessage(errorLog);
-            //return;
-        }
-        try
-        {
-            var response = (NetworkResponseType)BitConverter.ToInt16(inputBuffer,0);
-            errorLog+="Response is of type "+response+"\n";
-            NetworkHandler.HandleData(inputBuffer, inputType);
-        }
-        catch(Exception e)
-        {
-            errorLog +="Couldn't handle data";
-            //PromptMessage(errorLog);
-            //return;
-        }
+     
+        await stream.ReadAsync(inputDataTypeBuffer, 0, 2);
+        inputType = (NetworkDataType)BitConverter.ToInt16(inputDataTypeBuffer, 0);
+        await stream.ReadAsync(inputLengthBuffer, 0, 4);
+        var inputLength = BitConverter.ToInt32(inputLengthBuffer, 0);
+        inputBuffer = new byte[inputLength];
+        await stream.ReadAsync(inputBuffer, 0, inputBuffer.Length);
+        NetworkHandler.HandleData(inputBuffer, inputType);
 #endif
-        //PromptMessage(errorLog);
     }
 
     bool messagePrompted = false;
@@ -272,13 +252,22 @@ public class NetworkHandler
     public static Dictionary<int, Packet> handlers;
     public static int trials = 5;
 
-    private static byte[] lastBuffSent;
+    private static List<byte> lastBuffSent;
     private static NetworkDataType lastDataTypeSent;
 
     private static bool lastPackageSentSaved = false;
-    public static void SaveLastPackage(byte[] data, NetworkDataType type)
-    { 
-        lastBuffSent = data; lastDataTypeSent = type; lastPackageSentSaved = true;
+
+    public static byte[] LastChunk
+    {
+        get ; set;
+    }
+
+    public static void SaveLastPackage(List<byte> data, NetworkDataType type)
+    {
+        if (!lastPackageSentSaved)
+        {
+            lastBuffSent = data; lastDataTypeSent = type; lastPackageSentSaved = true;
+        }
     }
 
     public static void InitializePackages()
@@ -292,16 +281,7 @@ public class NetworkHandler
 
     public static void HandleData(byte[] data, NetworkDataType type)
     {
-        //handlers[(int)type].Invoke(data);
-        switch (type)
-        {
-            case NetworkDataType.Response:
-                HandleResponse(data);
-                break;
-            case NetworkDataType.String:
-                HandleString(data);
-                break;
-        }
+        handlers[(int)type].Invoke(data);
     }
 
     public static void HandleString(byte[] data)
@@ -320,18 +300,16 @@ public class NetworkHandler
                 client.PromptMessage("Server received data");
                 break;
             case NetworkResponseType.DataCorrupt:
-                //for(int i = 0; i<trials; i++)
-                //{
                 if (counter<trials) 
                 {
-                    //client.SendData(lastBuffSent, lastDataTypeSent); 
+                    counter += 1;
+                    client.SendData(lastBuffSent, lastDataTypeSent); 
                 }
                 else
                 {
                     counter = 0;
-                    //client.PromptMessage("Maximal amount of trials reached, some problem is in the network");
-                }
-                //}
+                    client.PromptMessage("Maximal amount of trials reached, some problem is in the network");
+                }                
                 break;
         }
     }
@@ -342,7 +320,8 @@ public class NetworkHandler
 public enum NetworkDataType
 {
     Response = 0,
-    String = 1
+    String = 1,
+    PointCloud = 2
 }
 
 public enum NetworkResponseType

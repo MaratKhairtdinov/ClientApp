@@ -798,9 +798,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   collector: {fileID: 1351013097}
-  host: 192.168.0.101
+  host: 192.168.0.100
   port: 10000
-  chunkSize: 1024
+  chunkSize: 512
   GUILog:
     m_PersistentCalls:
       m_Calls:
