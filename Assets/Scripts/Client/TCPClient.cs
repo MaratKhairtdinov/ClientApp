@@ -131,7 +131,7 @@ public class TCPClient : MonoBehaviour
     byte[] chunk;
     int chunks, residual;
     int chunksSent = 0; int chunksSentPrev = 0;
-    public LoadingBarEvent OnLoadData;
+    public DataTransferEvent onDataSent;
 
     public async Task SendDataAsync()
     {
@@ -171,7 +171,7 @@ public class TCPClient : MonoBehaviour
                         response = (NetworkResponseType)BitConverter.ToInt16(response_buffer, 0);
                     }
                     chunksSent+=1;
-                    PromptMessage("Progress: "+(i+1)+" chunks of "+chunks+" sent");
+                    PromptMessage("");
                 }
                 response = NetworkResponseType.DataCorrupt;
                 while(response == NetworkResponseType.DataCorrupt)
@@ -184,8 +184,7 @@ public class TCPClient : MonoBehaviour
                 }
                 outputData.Clear();
                 writer.DetachStream();
-                chunksSent = 0;
-                chunksSentPrev = 0;
+                
             }
 #endif
         }
@@ -221,13 +220,9 @@ public class TCPClient : MonoBehaviour
     private string message;
     private void Update()
     {
-        if (chunksSent > chunksSentPrev)
-        {
-            chunksSentPrev = chunksSent;
-            OnLoadData.Invoke(chunks, chunksSent);
-        }        
         if (messagePrompted)
         {
+            onDataSent.Invoke(chunksSent, chunks);
             GUILog.Invoke(message);
             messagePrompted = false;
         }
@@ -242,6 +237,8 @@ public class TCPClient : MonoBehaviour
 }
 [Serializable]
 public class ClientEvent : UnityEvent<string> { }
+[Serializable]
+public class DataTransferEvent : UnityEvent<int, int> { }
 
 
 public class NetworkHandler

@@ -14,13 +14,13 @@ public class LoadingBar : MonoBehaviour
     private void Awake()
     {
         slider = sliderNode.GetComponent<Slider>();
-        slider.minValue = 0; slider.maxValue = 1;
+        slider.minValue = 0.0f; slider.maxValue = 1.0f;
     }
 
     public void DataLoadEvent(int fullLength, int chunksProcessed)
     {
-        slider.normalizedValue = chunksProcessed / fullLength;
+        slider.normalizedValue = ((float)chunksProcessed) / ((float) fullLength);        
     }
 }
 
-[Serializable] public class LoadingBarEvent : UnityEvent<int, int> { }
+
