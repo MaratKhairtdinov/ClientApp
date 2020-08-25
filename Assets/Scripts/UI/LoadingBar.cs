@@ -14,12 +14,12 @@ public class LoadingBar : MonoBehaviour
     private void Awake()
     {
         slider = sliderNode.GetComponent<Slider>();
-        slider.minValue = 0.0f; slider.maxValue = 1.0f;
+        slider.minValue = 0f; slider.maxValue = 100f;
     }
 
-    public void DataLoadEvent(int fullLength, int chunksProcessed)
+    public void DataLoadEvent(int percentage)
     {
-        slider.normalizedValue = ((float)chunksProcessed) / ((float) fullLength);        
+        slider.value = percentage;
     }
 }
 

@@ -71,7 +71,7 @@ public class TCPClient : MonoBehaviour
         }
         catch (Exception e)
         {
-            PromptMessage(e.ToString());
+            NotifyMainThread(0, e.ToString(), 0);
         }
     }
     
@@ -117,7 +117,7 @@ public class TCPClient : MonoBehaviour
         }
         
         SendData(data, NetworkDataType.PointCloud);
-        PromptMessage("Pointcloud sent to the server");
+        NotifyMainThread(0, "Point cloud prepared to send over the network", 0);
     }
 
     public async Task ExchangeDataAsync()
@@ -132,6 +132,7 @@ public class TCPClient : MonoBehaviour
     int chunks, residual;
     int chunksSent = 0; int chunksSentPrev = 0;
     public DataTransferEvent onDataSent;
+    
 
     public async Task SendDataAsync()
     {
@@ -158,6 +159,9 @@ public class TCPClient : MonoBehaviour
                 NetworkHandler.SaveLastPackage(outputData, outputDataType);
                 byte[] response_buffer = new byte[2];
                 NetworkResponseType response;
+
+                int percentage = 0;
+
                 for(int i = 0; i < chunks; i++)
                 {
                     bool chunk_received = false;
@@ -168,10 +172,12 @@ public class TCPClient : MonoBehaviour
                         await writer.StoreAsync();
                         await writer.FlushAsync();
                         await stream.ReadAsync(response_buffer, 0, 2);
+                        stream.Flush();
                         response = (NetworkResponseType)BitConverter.ToInt16(response_buffer, 0);
-                    }
-                    chunksSent+=1;
-                    PromptMessage("");
+
+                    }                    
+                    percentage = ((int)(((float)(i+1))/((float)chunks)*100));
+                    NotifyMainThread(percentage, string.Format("Sending chunk #{0} of {1}",i+1, chunks), 0f);
                 }
                 response = NetworkResponseType.DataCorrupt;
                 while(response == NetworkResponseType.DataCorrupt)
@@ -183,14 +189,13 @@ public class TCPClient : MonoBehaviour
                     response = (NetworkResponseType)BitConverter.ToInt16(response_buffer, 0);
                 }
                 outputData.Clear();
-                writer.DetachStream();
-                
+                writer.DetachStream();                
             }
 #endif
         }
         catch (Exception e)
         {
-            PromptMessage(e.ToString());
+            NotifyMainThread(0, e.ToString(), 0);
         }
     }
 
@@ -215,30 +220,53 @@ public class TCPClient : MonoBehaviour
         NetworkHandler.HandleData(inputBuffer, inputType);
 #endif
     }
+    private string mainThreadString;
+    private int mainThreadInt;
+    private float mainThreadFloat;
+    bool mainThreadNotified = false;
+    public void NotifyMainThread(int intgr, string strg, float flt)
+    {
+        mainThreadNotified = true;
+        mainThreadString = strg; mainThreadInt = intgr; mainThreadFloat = flt;
+    }
 
+
+    
     bool messagePrompted = false;
     private string message;
     private void Update()
     {
-        if (messagePrompted)
+        if (mainThreadNotified)
         {
-            onDataSent.Invoke(chunksSent, chunks);
+            mainThreadNotified = false;
+
+            if (mainThreadInt > 0)
+            {
+                onDataSent.Invoke(mainThreadInt);
+            }
+            if (mainThreadString.Length > 0)
+            {
+                GUILog.Invoke(mainThreadString);
+            }
+            if (mainThreadFloat > 0)
+            {
+                onDataSent.Invoke((int)mainThreadFloat);
+            }
+        }
+        if (messagePrompted)
+        {            
             GUILog.Invoke(message);
             messagePrompted = false;
         }
     }
 
-    public void PromptMessage(string message)
-    {
-        this.message = message;
-        messagePrompted = true;
-    }
+    
 
 }
 [Serializable]
 public class ClientEvent : UnityEvent<string> { }
 [Serializable]
-public class DataTransferEvent : UnityEvent<int, int> { }
+public class DataTransferEvent : UnityEvent<int> { }
 
 
 public class NetworkHandler
@@ -282,7 +310,7 @@ public class NetworkHandler
 
     public static void HandleString(byte[] data)
     {
-        client.PromptMessage(Encoding.UTF8.GetString(data, 0, data.Length));
+        client.NotifyMainThread(0,Encoding.UTF8.GetString(data, 0, data.Length), 0);
     }
 
 
@@ -293,7 +321,7 @@ public class NetworkHandler
         switch (response)
         {
             case NetworkResponseType.AllGood:
-                client.PromptMessage("Server received data");
+                client.NotifyMainThread(0, "Server received data", 0);
                 break;
             case NetworkResponseType.DataCorrupt:
                 if (counter<trials)
@@ -304,13 +332,11 @@ public class NetworkHandler
                 else
                 {
                     counter = 0;
-                    client.PromptMessage("Maximal amount of trials reached, some problem is in the network");
+                    client.NotifyMainThread(0, "Maximal amount of trials reached, some problem is in the network", 0);
                 }                
                 break;
         }
     }
-
-    
 }
 
 public enum NetworkDataType

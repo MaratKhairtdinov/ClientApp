@@ -872,7 +872,7 @@ MonoBehaviour:
   collector: {fileID: 1351013097}
   host: 192.168.0.100
   port: 10000
-  chunkSize: 2048
+  chunkSize: 1024
   GUILog:
     m_PersistentCalls:
       m_Calls:
@@ -2716,7 +2716,7 @@ PrefabInstance:
     - target: {fileID: 114000012698980792, guid: 2ed75ffdf9031c94e8bce4b3d17b9928,
         type: 3}
       propertyPath: TrianglesPerCubicMeter
-      value: 5
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 114000012698980792, guid: 2ed75ffdf9031c94e8bce4b3d17b9928,
         type: 3}
