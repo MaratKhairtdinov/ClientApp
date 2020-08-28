@@ -57,7 +57,7 @@ public class VertexCollector : MonoBehaviour
             }
             foreach (Vector3 normal in mesh.normals)
             {
-                normals.Add(transform.TransformPoint(normal));
+                normals.Add(transform.TransformDirection(normal).normalized);
             }
         }
         

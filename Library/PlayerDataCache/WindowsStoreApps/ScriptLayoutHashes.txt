@@ -1,6 +1,6 @@
 WindowsStoreApps
 PlayerPath?
-C:/Users/Marat/Documents/Thesis/Build
+D:/Marat/Thesis/Thesis/Build
 SceneListBegin?
 Assets/Scenes/MainScene.unity
 SceneListEnd?
