@@ -31,6 +31,7 @@ public class TCPClient : MonoBehaviour
         inputGate.client  = this;
         outputGate.client = this;
         NetworkDataHandler.client = this;
+        NetworkDataHandler.InitializePackages();
         NetworkDataHandler.modelGeometry = modelGeometry;
     }
 
@@ -116,7 +117,7 @@ public class TCPClient : MonoBehaviour
         public void Connect(string host, string port)
         {
             var connectTask = Task.Run(() => ConnectAsync(host, port)); connectTask.Wait();
-            client.NotifyMainThread(0, "Input Gate connected", 0);
+            //client.NotifyMainThread(0, "Input Gate connected", 0);
         }
 
         async Task ConnectAsync(string host, string port)
@@ -131,7 +132,7 @@ public class TCPClient : MonoBehaviour
             }
             catch (Exception e)
             {
-                client.NotifyMainThread(0, e.ToString(), 0);
+                client.NotifyMainThread(0, "InputGate ConnectAsznc() ERROR\n"+e.ToString(), 0);
             }
         }
 
@@ -143,34 +144,63 @@ public class TCPClient : MonoBehaviour
             receivingTask.Start();            
         }
 
-        public async Task<byte[]> ReceiveDataAsync()
+        public async Task ReceiveDataAsync()
         {
             byte[] inputBuffer = null;
-#if !UNITY_EDITOR
-            try
+#if !UNITY_EDITOR            
+            while(true)
             {
-                while(true)
+                string errorLog = string.Empty;
+                var stream = ClientSocket.InputStream.AsStreamForRead();
+                byte[] inputDataTypeBuffer = new byte[2];
+                byte[] inputLengthBuffer   = new byte[4];                
+                
+                try
                 {
-                    var stream = ClientSocket.InputStream.AsStreamForRead();
-                    byte[] inputDataTypeBuffer = new byte[2];
-                    byte[] inputLengthBuffer   = new byte[4];
-        
                     await stream.ReadAsync(inputDataTypeBuffer, 0, 2);
-                    NetworkDataType inputType = (NetworkDataType)BitConverter.ToInt16(inputDataTypeBuffer, 0);
+                }
+                catch(Exception e)
+                {
+                    errorLog+="InputDataTypeBuffer read error\n";
+                }
+
+                NetworkDataType inputType = (NetworkDataType)BitConverter.ToInt16(inputDataTypeBuffer, 0);
+                
+                try
+                {
                     await stream.ReadAsync(inputLengthBuffer, 0, 4);
-                    var inputLength = BitConverter.ToInt32(inputLengthBuffer, 0);
+                }
+                catch(Exception e)
+                {
+                    errorLog+="InputLengthBuffer read error\n";
+                }
+                var inputLength = BitConverter.ToInt32(inputLengthBuffer, 0);
+                try
+                {
                     inputBuffer = new byte[inputLength];
                     await stream.ReadAsync(inputBuffer, 0, inputBuffer.Length);
-
+                }
+                catch(Exception e)
+                {
+                    errorLog+="InputBuffer read error\n";
+                }
+                try
+                {
+                    errorLog+="DataType: "+inputType+"\n";
                     NetworkDataHandler.HandleNetworkData(inputBuffer, inputType);
                 }
+                catch(Exception e)
+                {
+                    errorLog+="HandleData error\n";                    
+                }
+                if(errorLog.Length>0)
+                {
+                    client.NotifyMainThread(0,errorLog,0);
+                    errorLog = string.Empty;
+                }
+                
             }
-            catch(Exception e)
-            {
-                client.NotifyMainThread(0, e.ToString(),0);
-            }
-#endif
-            return inputBuffer;
+#endif            
         }
     }
     public class OutputGate
@@ -188,7 +218,7 @@ public class TCPClient : MonoBehaviour
         public void Connect(string host, string port)
         {
             var connectTask = Task.Run(() => ConnectAsync(host, port)); connectTask.Wait();
-            client.NotifyMainThread(0, "Input Gate connected", 0);
+            //client.NotifyMainThread(0, "Input Gate connected", 0);
         }
 
         async Task ConnectAsync(string host, string port)
@@ -222,6 +252,8 @@ public class TCPClient : MonoBehaviour
 #if !UNITY_EDITOR
                 using(var writer = new DataWriter(ClientSocket.OutputStream))
                 {
+                    NetworkDataHandler.lastBufferSent = buffer; NetworkDataHandler.lastTypeSent = type;
+
                     writer.ByteOrder = ByteOrder.BigEndian;
                     writer.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;
 
@@ -255,6 +287,7 @@ public class TCPClient : MonoBehaviour
                             response = (NetworkResponseType)BitConverter.ToInt16(response_buffer, 0);
                         }
                         percentage = ((int)(((float)(i+1))/((float)chunks)*100));
+                        client.NotifyMainThread(percentage, "Sending data, Chunk#"+i+" of "+chunks, 0);
                     }
                     response = NetworkResponseType.DataCorrupt;
                     while(response == NetworkResponseType.DataCorrupt)
@@ -268,10 +301,11 @@ public class TCPClient : MonoBehaviour
                     writer.DetachStream();
                 }
 #endif
+
             }
             catch (Exception e)
             {
-                client.NotifyMainThread(0, e.ToString(), 0);
+                client.NotifyMainThread(0, "SendDataAsync Error"+e.ToString(), 0);
             }
         }
     }
@@ -284,7 +318,7 @@ public class TCPClient : MonoBehaviour
         public delegate void Handler(byte[] data);
         public static  Dictionary<int, Handler> handlers;
 
-        static List<byte> lastBufferSent; static NetworkDataType lastTypeSent;
+        public static List<byte> lastBufferSent; public static NetworkDataType lastTypeSent;
 
         public static void InitializePackages()
         {
@@ -304,14 +338,15 @@ public class TCPClient : MonoBehaviour
 
         private static void HandleMatrix(byte[] data)
         {
-            Vector4 column0 = new Vector4((float)BitConverter.ToDouble(data, 0), (float)BitConverter.ToDouble(data, 8), (float)BitConverter.ToDouble(data, 16), (float)BitConverter.ToDouble(data, 24));
+            /*
+            Vector4 column0 = new Vector4((float)BitConverter.ToDouble(data,  0), (float)BitConverter.ToDouble(data, 8), (float)BitConverter.ToDouble(data, 16), (float)BitConverter.ToDouble(data, 24));
             Vector4 column1 = new Vector4((float)BitConverter.ToDouble(data, 32), (float)BitConverter.ToDouble(data, 40), (float)BitConverter.ToDouble(data, 48), (float)BitConverter.ToDouble(data, 56));
             Vector4 column2 = new Vector4((float)BitConverter.ToDouble(data, 64), (float)BitConverter.ToDouble(data, 72), (float)BitConverter.ToDouble(data, 80), (float)BitConverter.ToDouble(data, 88));
             Vector4 column3 = new Vector4((float)BitConverter.ToDouble(data, 96), (float)BitConverter.ToDouble(data, 104), (float)BitConverter.ToDouble(data, 112), (float)BitConverter.ToDouble(data, 128));
             Matrix4x4 mat = new Matrix4x4(column0, column1, column2, column3);
-
-            client.SetTransform(mat.ExtractPosition(), mat.ExtractRotation(), mat.ExtractScale());            
-            client.NotifyMainThread(0, "MATRIX RECEIVED", 0);
+            */
+            //client.SetTransform(mat.ExtractPosition(), mat.ExtractRotation(), mat.ExtractScale());
+            client.NotifyMainThread(0, "MATRIX RECEIVED, buffer length: "+data.Length, 0);
         }
 
         private static void HandlePointcloud(byte[] data)
