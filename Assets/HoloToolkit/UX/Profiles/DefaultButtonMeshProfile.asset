@@ -27,7 +27,7 @@ MonoBehaviour:
     Scale: {x: 1, y: 1, z: 1}
   - Name: Targeted
     ActiveState: 1
-    StateColor: {r: 1, g: 1, b: 1, a: 0.316}
+    StateColor: {r: 1, g: 0.19607843, b: 0, a: 0.627451}
     StateValue: 0
     Offset: {x: 0, y: 0, z: 0}
     Scale: {x: 1, y: 1, z: 1}
@@ -45,13 +45,13 @@ MonoBehaviour:
     Scale: {x: 1, y: 1, z: 1}
   - Name: Observation
     ActiveState: 4
-    StateColor: {r: 0.4392157, g: 0.4392157, b: 0.4392157, a: 0}
+    StateColor: {r: 1, g: 0.627451, b: 0, a: 0.627451}
     StateValue: 0
     Offset: {x: 0, y: 0, z: 0}
     Scale: {x: 1, y: 1, z: 1}
   - Name: Disabled
     ActiveState: 5
-    StateColor: {r: 0.4392157, g: 0.4392157, b: 0.4392157, a: 0}
+    StateColor: {r: 1, g: 0.627451, b: 0, a: 0.627451}
     StateValue: 0
     Offset: {x: 0, y: 0, z: 0}
     Scale: {x: 1, y: 1, z: 1}

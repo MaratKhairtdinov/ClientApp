@@ -124,6 +124,7 @@ edf06f5ca55f4089ea5821139bf6af0b Assembly-CSharp.dll:HoloToolkit.Unity.UX.AppBar
 d67a97d5b4f3f0d1fd584ceb4307b60d Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.MixedRealityCameraManager
 2d0d9a0d4af33003effaacddfee4bd28 Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.FileSurfaceObserver
 d08e71ed6a0c391c105577b6b6166bd3 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.XboxControllerHandlerBase
+cbbf6c02f452f646a2566c074e7e2fa6 Assembly-CSharp.dll:.TCPClient
 d7b84368bb93b262889f5efcd401345e Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.RemoteMeshTarget
 6fff9a955678869c663c6734990c62d5 Assembly-CSharp.dll:HoloToolkit.Sharing.Utilities.AutoJoinSessionAndRoom
 c7f40ee2651092fce11393ffdf0288b4 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.ObjectCursor
@@ -383,6 +384,7 @@ d7b84368bb93b262889f5efcd401345e Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMa
 d251bf88db6c95a6b1aa0b69298da9ef UnityEngine.SpatialTracking.dll:UnityEngine.SpatialTracking.TrackedPoseDriver
 2262717442ce10db09ddab13d296b48a Assembly-CSharp.dll:HoloToolkit.Sharing.Utilities.DirectPairing
 0c842a73bb2e2ccf3f940265ec2cf535 Assembly-CSharp.dll:HoloToolkit.Unity.AudioEventBank
+8dbfd261c01275671d183db194c76da3 Assembly-CSharp.dll:.Compass
 71bb6a6b6c8f052f948db64c7dd3ca4f Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.DictationInputManager
 dca4513913048e210f9ac4c51d3b0d80 Assembly-CSharp.dll:HoloToolkit.UX.Dialog.DialogShell
 934026238b2ba09b4edbde2fbb6cb488 Assembly-CSharp.dll:HoloToolkit.Unity.SolverBodyLock
@@ -490,4 +492,4 @@ fe10de86e42ce80dc24cf76ac1c87c2a Vuforia.UnityExtensions.dll:Vuforia.VuforiaConf
 69167579cf7fcbb2676fc1e675963dcd Vuforia.UnityExtensions.dll:Vuforia.VuMarkBehaviour
 fbbf64dcbe0662e3eda1dec45ea8f895 Vuforia.UnityExtensions.dll:Vuforia.WireframeBehaviour
 71bb6a6b6c8f052f948db64c7dd3ca4f Vuforia.UnityExtensions.dll:Vuforia.WireframeTrackableEventHandler
-cbbf6c02f452f646a2566c074e7e2fa6 Assembly-CSharp.dll:.TCPClient
+35345ff397976ee1b08e5d1e6e1805ee Assembly-CSharp.dll:.Example

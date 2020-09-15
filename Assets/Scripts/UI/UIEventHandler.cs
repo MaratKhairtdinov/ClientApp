@@ -8,7 +8,6 @@ using UnityEngine.Events;
 
 public class UIEventHandler : MonoBehaviour
 {
-    //public TCPClient newClient;
     public TCPClient client;
     public VertexCollector collector;
     public SpatialMappingObserver spatialMappingObserver;
@@ -24,7 +23,8 @@ public class UIEventHandler : MonoBehaviour
                 client.Connect();                
                 break;
             case ButtonType.SendHello:
-                client.SendString("Message to check");
+                //client.SendString("Message to check");
+                client.SendMatrix();
                 break;
             case ButtonType.CollectVertices:
                 collector.Collect();

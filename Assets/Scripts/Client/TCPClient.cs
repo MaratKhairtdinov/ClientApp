@@ -33,6 +33,17 @@ public class TCPClient : MonoBehaviour
         NetworkDataHandler.client = this;
         NetworkDataHandler.InitializePackages();
         NetworkDataHandler.modelGeometry = modelGeometry;
+        //var mat = Matrix4x4.TRS(modelGeometry.position, modelGeometry.rotation, modelGeometry.localScale);
+        var mat = Matrix4x4.identity; 
+        mat.m01 = mat.m02 = mat.m03 = 1;
+        mat.m10 = mat.m12 = mat.m13 = 1;
+        mat.m20 = mat.m21 = mat.m23 = 1;
+        mat.m30 = mat.m31 = mat.m32 = 1;
+        var convertMatrix = Matrix4x4.identity; convertMatrix.m00 = -1.0f;
+        mat *= convertMatrix;
+        convertMatrix *= mat;
+        
+        Debug.Log(convertMatrix);
     }
 
     public void Connect()
@@ -46,6 +57,21 @@ public class TCPClient : MonoBehaviour
     public void SendString(string strg)
     {
         outputGate.SendData(Encoding.UTF8.GetBytes(strg).ToList<byte>(), NetworkDataType.String);
+    }
+
+    public void SendMatrix()
+    {
+        Transform transform = modelGeometry; var rot = new Quaternion(); rot.eulerAngles = new Vector3(modelGeometry.eulerAngles.x+90, modelGeometry.eulerAngles.y, modelGeometry.eulerAngles.z+180);
+        
+        var mat = Matrix4x4.TRS(transform.position, rot, transform.localScale);
+        mat = mat.SwapHands();
+        List<byte> buffer = new List<byte>();
+        buffer.AddRange(BitConverter.GetBytes(mat.m00)); buffer.AddRange(BitConverter.GetBytes(mat.m01)); buffer.AddRange(BitConverter.GetBytes(mat.m02)); buffer.AddRange(BitConverter.GetBytes(mat.m03));
+        buffer.AddRange(BitConverter.GetBytes(mat.m10)); buffer.AddRange(BitConverter.GetBytes(mat.m11)); buffer.AddRange(BitConverter.GetBytes(mat.m12)); buffer.AddRange(BitConverter.GetBytes(mat.m13));
+        buffer.AddRange(BitConverter.GetBytes(mat.m20)); buffer.AddRange(BitConverter.GetBytes(mat.m21)); buffer.AddRange(BitConverter.GetBytes(mat.m22)); buffer.AddRange(BitConverter.GetBytes(mat.m23));
+        buffer.AddRange(BitConverter.GetBytes(mat.m30)); buffer.AddRange(BitConverter.GetBytes(mat.m31)); buffer.AddRange(BitConverter.GetBytes(mat.m32)); buffer.AddRange(BitConverter.GetBytes(mat.m33));
+        outputGate.SendData(buffer, NetworkDataType.Matrix4x4);
+        NotifyMainThread(0, mat.ToString(), 0);
     }
 
     public void SendPointCloud()
@@ -81,7 +107,7 @@ public class TCPClient : MonoBehaviour
     {
         transform_set = true;
 
-        this.position = position; this.rotation = rotation; this.scale = scale;
+        this.position += position; this.rotation = rotation; this.scale += scale;
     }
 
     private void Update()
@@ -102,7 +128,13 @@ public class TCPClient : MonoBehaviour
         if (transform_set)
         {
             transform_set = false;
-            modelGeometry.position = position; modelGeometry.rotation = rotation; modelGeometry.localScale = scale;
+
+            modelGeometry.position += position;
+            modelGeometry.rotation = modelGeometry.rotation*rotation;
+            modelGeometry.eulerAngles = new Vector3(modelGeometry.eulerAngles.x, modelGeometry.eulerAngles.y + 180, modelGeometry.eulerAngles.z);
+            Vector3 newScale = modelGeometry.localScale;
+            newScale.x *= scale.x; newScale.y *= scale.y; newScale.z *= scale.z;
+            modelGeometry.localScale = newScale;
         }
     }
 
@@ -141,7 +173,7 @@ public class TCPClient : MonoBehaviour
         public void ReceiveData()
         {
             receivingTask = new Task(() => ReceiveDataAsync());
-            receivingTask.Start();            
+            receivingTask.Start();
         }
 
         public async Task ReceiveDataAsync()
@@ -153,52 +185,15 @@ public class TCPClient : MonoBehaviour
                 string errorLog = string.Empty;
                 var stream = ClientSocket.InputStream.AsStreamForRead();
                 byte[] inputDataTypeBuffer = new byte[2];
-                byte[] inputLengthBuffer   = new byte[4];                
-                
-                try
-                {
-                    await stream.ReadAsync(inputDataTypeBuffer, 0, 2);
-                }
-                catch(Exception e)
-                {
-                    errorLog+="InputDataTypeBuffer read error\n";
-                }
+                byte[] inputLengthBuffer   = new byte[4];
 
+                await stream.ReadAsync(inputDataTypeBuffer, 0, 2);
                 NetworkDataType inputType = (NetworkDataType)BitConverter.ToInt16(inputDataTypeBuffer, 0);
-                
-                try
-                {
-                    await stream.ReadAsync(inputLengthBuffer, 0, 4);
-                }
-                catch(Exception e)
-                {
-                    errorLog+="InputLengthBuffer read error\n";
-                }
-                var inputLength = BitConverter.ToInt32(inputLengthBuffer, 0);
-                try
-                {
-                    inputBuffer = new byte[inputLength];
-                    await stream.ReadAsync(inputBuffer, 0, inputBuffer.Length);
-                }
-                catch(Exception e)
-                {
-                    errorLog+="InputBuffer read error\n";
-                }
-                try
-                {
-                    errorLog+="DataType: "+inputType+"\n";
-                    NetworkDataHandler.HandleNetworkData(inputBuffer, inputType);
-                }
-                catch(Exception e)
-                {
-                    errorLog+="HandleData error\n";                    
-                }
-                if(errorLog.Length>0)
-                {
-                    client.NotifyMainThread(0,errorLog,0);
-                    errorLog = string.Empty;
-                }
-                
+                await stream.ReadAsync(inputLengthBuffer, 0, 4);
+                var inputLength = BitConverter.ToInt32(inputLengthBuffer, 0);              
+                inputBuffer = new byte[inputLength];
+                await stream.ReadAsync(inputBuffer, 0, inputBuffer.Length);
+                NetworkDataHandler.HandleNetworkData(inputBuffer, inputType);
             }
 #endif            
         }
@@ -338,15 +333,20 @@ public class TCPClient : MonoBehaviour
 
         private static void HandleMatrix(byte[] data)
         {
-            /*
             Vector4 column0 = new Vector4((float)BitConverter.ToDouble(data,  0), (float)BitConverter.ToDouble(data, 8), (float)BitConverter.ToDouble(data, 16), (float)BitConverter.ToDouble(data, 24));
             Vector4 column1 = new Vector4((float)BitConverter.ToDouble(data, 32), (float)BitConverter.ToDouble(data, 40), (float)BitConverter.ToDouble(data, 48), (float)BitConverter.ToDouble(data, 56));
             Vector4 column2 = new Vector4((float)BitConverter.ToDouble(data, 64), (float)BitConverter.ToDouble(data, 72), (float)BitConverter.ToDouble(data, 80), (float)BitConverter.ToDouble(data, 88));
-            Vector4 column3 = new Vector4((float)BitConverter.ToDouble(data, 96), (float)BitConverter.ToDouble(data, 104), (float)BitConverter.ToDouble(data, 112), (float)BitConverter.ToDouble(data, 128));
+            Vector4 column3 = new Vector4((float)BitConverter.ToDouble(data, 96), (float)BitConverter.ToDouble(data, 104), (float)BitConverter.ToDouble(data, 112), (float)BitConverter.ToDouble(data, 120));
+            
             Matrix4x4 mat = new Matrix4x4(column0, column1, column2, column3);
-            */
-            //client.SetTransform(mat.ExtractPosition(), mat.ExtractRotation(), mat.ExtractScale());
-            client.NotifyMainThread(0, "MATRIX RECEIVED, buffer length: "+data.Length, 0);
+            mat = mat.SwapHands();
+
+            var pos = mat.ExtractPosition();
+            var rot = mat.ExtractRotation();
+            var scl = mat.ExtractScale();
+
+            client.NotifyMainThread(0, "MATRIX RECEIVED,\nPosition: " + pos.ToString() + "\nRotation: " + rot.eulerAngles.ToString()+"\nScale: "+scl.ToString(), 0);
+            client.SetTransform(pos, rot, scl);
         }
 
         private static void HandlePointcloud(byte[] data)
@@ -406,6 +406,14 @@ public enum NetworkResponseType
 
 public static class MatrixExtensions
 {
+    public static Matrix4x4 SwapHands(this Matrix4x4 matrix)
+    {
+        Vector3 pos = matrix.ExtractPosition();
+        Quaternion rotation = matrix.ExtractRotation();
+        Vector3 scl = matrix.ExtractScale();
+        Quaternion newRotation = new Quaternion(-rotation.x, -rotation.z, -rotation.y, rotation.w);
+        return Matrix4x4.TRS(new Vector3(pos.x, pos.z, pos.y), rotation, new Vector3(scl.x, scl.z, scl.y));
+    }
     public static Quaternion ExtractRotation(this Matrix4x4 matrix)
     {
         Vector3 forward;
@@ -433,9 +441,9 @@ public static class MatrixExtensions
     public static Vector3 ExtractScale(this Matrix4x4 matrix)
     {
         Vector3 scale;
-        scale.x = new Vector4(matrix.m00, matrix.m10, matrix.m20, matrix.m30).magnitude;
-        scale.y = new Vector4(matrix.m01, matrix.m11, matrix.m21, matrix.m31).magnitude;
-        scale.z = new Vector4(matrix.m02, matrix.m12, matrix.m22, matrix.m32).magnitude;
+        scale.x = new Vector3(matrix.m00, matrix.m10, matrix.m20).magnitude;
+        scale.y = new Vector3(matrix.m01, matrix.m11, matrix.m21).magnitude;
+        scale.z = new Vector3(matrix.m02, matrix.m12, matrix.m22).magnitude;
         return scale;
     }
 }
