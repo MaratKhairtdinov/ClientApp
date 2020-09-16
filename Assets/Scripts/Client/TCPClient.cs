@@ -48,7 +48,7 @@ public class TCPClient : MonoBehaviour
 
     public void Connect()
     {
-         inputGate.Connect(host,  inputGatePort);
+        inputGate.Connect(host,  inputGatePort);
         Thread.Sleep(3000);
         outputGate.Connect(host, outputGatePort);        
         inputGate.ReceiveData();
@@ -61,8 +61,7 @@ public class TCPClient : MonoBehaviour
 
     public void SendMatrix()
     {
-        Transform transform = modelGeometry; var rot = new Quaternion(); rot.eulerAngles = new Vector3(modelGeometry.eulerAngles.x+90, modelGeometry.eulerAngles.y, modelGeometry.eulerAngles.z+180);
-        
+        Transform transform = modelGeometry; var rot = new Quaternion(); rot.eulerAngles = new Vector3(modelGeometry.eulerAngles.x+90, modelGeometry.eulerAngles.y, modelGeometry.eulerAngles.z);
         var mat = Matrix4x4.TRS(transform.position, rot, transform.localScale);
         mat = mat.SwapHands();
         List<byte> buffer = new List<byte>();
@@ -128,13 +127,12 @@ public class TCPClient : MonoBehaviour
         if (transform_set)
         {
             transform_set = false;
-
+            modelGeometry.rotation = rotation*modelGeometry.rotation;
             modelGeometry.position += position;
-            modelGeometry.rotation = modelGeometry.rotation*rotation;
-            modelGeometry.eulerAngles = new Vector3(modelGeometry.eulerAngles.x, modelGeometry.eulerAngles.y + 180, modelGeometry.eulerAngles.z);
             Vector3 newScale = modelGeometry.localScale;
             newScale.x *= scale.x; newScale.y *= scale.y; newScale.z *= scale.z;
             modelGeometry.localScale = newScale;
+            //NotifyMainThread(0, "Matrix:\n Position: " + modelGeometry.position.ToString() + "\nRotation: " + modelGeometry.eulerAngles.ToString() + "\nScale: " + modelGeometry.localScale.ToString(), 0);
         }
     }
 
@@ -236,8 +234,9 @@ public class TCPClient : MonoBehaviour
 
         public void SendData(List<byte> buffer, NetworkDataType type)
         {
+            if (sendingTask!=null && !sendingTask.IsCompleted) { return; }
             sendingTask = new Task(() => SendDataAsync(buffer, type));
-            sendingTask.Start();
+            sendingTask.Start(); sendingTask.Wait(); //sendingTask.Dispose();
         }
 
         public async Task SendDataAsync(List<byte> buffer, NetworkDataType type)
@@ -412,7 +411,7 @@ public static class MatrixExtensions
         Quaternion rotation = matrix.ExtractRotation();
         Vector3 scl = matrix.ExtractScale();
         Quaternion newRotation = new Quaternion(-rotation.x, -rotation.z, -rotation.y, rotation.w);
-        return Matrix4x4.TRS(new Vector3(pos.x, pos.z, pos.y), rotation, new Vector3(scl.x, scl.z, scl.y));
+        return Matrix4x4.TRS(new Vector3(pos.x, pos.z, pos.y), newRotation, new Vector3(scl.x, scl.z, scl.y));
     }
     public static Quaternion ExtractRotation(this Matrix4x4 matrix)
     {
