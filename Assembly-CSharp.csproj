@@ -577,6 +577,7 @@
     <Compile Include="Assets\HoloToolkit\UX\Scripts\UsabilityUtilities.cs" />
     <Compile Include="Assets\Scripts\Client\Example.cs" />
     <Compile Include="Assets\Scripts\Client\TCPClient.cs" />
+    <Compile Include="Assets\Scripts\IFC\IFCData.cs" />
     <Compile Include="Assets\Scripts\MeshManipulations\SpatialMappingColliderInspect.cs" />
     <Compile Include="Assets\Scripts\MeshManipulations\VertexCollector.cs" />
     <Compile Include="Assets\Scripts\MyButton.cs" />

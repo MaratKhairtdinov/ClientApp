@@ -23,6 +23,8 @@ public class TCPClient : MonoBehaviour
     public InputGate inputGate;
     public OutputGate outputGate;
 
+    public int roomNumber = 0;
+
     private void Start()
     {
         inputGate = new InputGate();
@@ -34,7 +36,7 @@ public class TCPClient : MonoBehaviour
         NetworkDataHandler.InitializePackages();
         NetworkDataHandler.modelGeometry = modelGeometry;
         //var mat = Matrix4x4.TRS(modelGeometry.position, modelGeometry.rotation, modelGeometry.localScale);
-        var mat = Matrix4x4.identity; 
+        var mat = Matrix4x4.identity;
         mat.m01 = mat.m02 = mat.m03 = 1;
         mat.m10 = mat.m12 = mat.m13 = 1;
         mat.m20 = mat.m21 = mat.m23 = 1;
@@ -48,33 +50,41 @@ public class TCPClient : MonoBehaviour
 
     public void Connect()
     {
-        inputGate.Connect(host,  inputGatePort);
-        Thread.Sleep(3000);
+        inputGate.Connect(host,  inputGatePort);        
         outputGate.Connect(host, outputGatePort);        
         inputGate.ReceiveData();
     }
 
     public void SendString(string strg)
     {
-        outputGate.SendData(Encoding.UTF8.GetBytes(strg).ToList<byte>(), NetworkDataType.String);
+        outputGate.SendData(Encoding.UTF8.GetBytes(strg).ToList<byte>(), NetworkDataType.String, NetworkCommand.Nothing);
+    }
+
+    public void SelectRoom()
+    {
+        List<byte> buffer = new List<byte>();
+        buffer.AddRange(BitConverter.GetBytes(roomNumber));
+        outputGate.SendData(buffer, NetworkDataType.LoadRoom, NetworkCommand.Nothing);
     }
 
     public void SendMatrix()
-    {
-        Transform transform = modelGeometry; var rot = new Quaternion(); rot.eulerAngles = new Vector3(modelGeometry.eulerAngles.x+90, modelGeometry.eulerAngles.y, modelGeometry.eulerAngles.z);
-        var mat = Matrix4x4.TRS(transform.position, rot, transform.localScale);
+    {        
+        Transform transform = modelGeometry; 
+        var mat = Matrix4x4.TRS(transform.position, transform.rotation, transform.localScale);
         mat = mat.SwapHands();
         List<byte> buffer = new List<byte>();
         buffer.AddRange(BitConverter.GetBytes(mat.m00)); buffer.AddRange(BitConverter.GetBytes(mat.m01)); buffer.AddRange(BitConverter.GetBytes(mat.m02)); buffer.AddRange(BitConverter.GetBytes(mat.m03));
         buffer.AddRange(BitConverter.GetBytes(mat.m10)); buffer.AddRange(BitConverter.GetBytes(mat.m11)); buffer.AddRange(BitConverter.GetBytes(mat.m12)); buffer.AddRange(BitConverter.GetBytes(mat.m13));
         buffer.AddRange(BitConverter.GetBytes(mat.m20)); buffer.AddRange(BitConverter.GetBytes(mat.m21)); buffer.AddRange(BitConverter.GetBytes(mat.m22)); buffer.AddRange(BitConverter.GetBytes(mat.m23));
         buffer.AddRange(BitConverter.GetBytes(mat.m30)); buffer.AddRange(BitConverter.GetBytes(mat.m31)); buffer.AddRange(BitConverter.GetBytes(mat.m32)); buffer.AddRange(BitConverter.GetBytes(mat.m33));
-        outputGate.SendData(buffer, NetworkDataType.Matrix4x4);
+        outputGate.SendData(buffer, NetworkDataType.Matrix4x4, NetworkCommand.Nothing);
         NotifyMainThread(0, mat.ToString(), 0);
     }
-
-    public void SendPointCloud()
+    
+    public void SendPointCloud(NetworkCommand command)
     {
+        collector.Collect();
+        SendMatrix();
         var vertices = collector.GetVertices();
         var normals = collector.GetNormals();
         List<byte> data = new List<byte>();
@@ -82,9 +92,9 @@ public class TCPClient : MonoBehaviour
         for (int i = 0; i < vertices.Count; i++)
         {
             data.AddRange(BitConverter.GetBytes(vertices[i].x)); data.AddRange(BitConverter.GetBytes(vertices[i].y)); data.AddRange(BitConverter.GetBytes(vertices[i].z));
-             data.AddRange(BitConverter.GetBytes(normals[i].x));  data.AddRange(BitConverter.GetBytes(normals[i].y));  data.AddRange(BitConverter.GetBytes(normals[i].z));
+            data.AddRange(BitConverter.GetBytes(normals[i].x));  data.AddRange(BitConverter.GetBytes(normals[i].y));  data.AddRange(BitConverter.GetBytes(normals[i].z));
         }
-        outputGate.SendData(data, NetworkDataType.PointCloud);
+        outputGate.SendData(data, NetworkDataType.PointCloud, command);
     }
 
 
@@ -106,7 +116,7 @@ public class TCPClient : MonoBehaviour
     {
         transform_set = true;
 
-        this.position += position; this.rotation = rotation; this.scale += scale;
+        this.position = position; this.rotation = rotation; this.scale = scale;
     }
 
     private void Update()
@@ -202,7 +212,7 @@ public class TCPClient : MonoBehaviour
         Windows.Networking.Sockets.StreamSocket ClientSocket;
 #endif
         public TCPClient client;
-        int chunkSize = 1024;
+        int chunkSize = 512;
         int chunks, residual;
         public OutputGate()
         {
@@ -232,14 +242,14 @@ public class TCPClient : MonoBehaviour
 
         Task sendingTask;
 
-        public void SendData(List<byte> buffer, NetworkDataType type)
+        public void SendData(List<byte> buffer, NetworkDataType type, NetworkCommand command)
         {
             if (sendingTask!=null && !sendingTask.IsCompleted) { return; }
-            sendingTask = new Task(() => SendDataAsync(buffer, type));
-            sendingTask.Start(); sendingTask.Wait(); //sendingTask.Dispose();
+            sendingTask = new Task(() => SendDataAsync(buffer, type, command));
+            sendingTask.Start(); sendingTask.Wait();
         }
 
-        public async Task SendDataAsync(List<byte> buffer, NetworkDataType type)
+        public async Task SendDataAsync(List<byte> buffer, NetworkDataType type, NetworkCommand command)
         {
             try
             {
@@ -257,6 +267,7 @@ public class TCPClient : MonoBehaviour
                     /*
                      *Header of the package so that the other side knows how much and what kind of data to receive
                      */
+                    writer.WriteInt16((short)command);
                     writer.WriteInt16((short)type);
                     writer.WriteInt32(chunkSize);
                     writer.WriteInt32(chunks);
@@ -312,7 +323,7 @@ public class TCPClient : MonoBehaviour
         public delegate void Handler(byte[] data);
         public static  Dictionary<int, Handler> handlers;
 
-        public static List<byte> lastBufferSent; public static NetworkDataType lastTypeSent;
+        public static List<byte> lastBufferSent; public static NetworkDataType lastTypeSent; public static NetworkCommand lastCommand;
 
         public static void InitializePackages()
         {
@@ -371,7 +382,7 @@ public class TCPClient : MonoBehaviour
                     if (counter < trials)
                     {
                         counter += 1;
-                        outputGate.SendData(lastBufferSent, lastTypeSent);
+                        outputGate.SendData(lastBufferSent, lastTypeSent, lastCommand);
                     }
                     else
                     {
@@ -394,13 +405,21 @@ public enum NetworkDataType
     Response = 0,
     String = 1,
     PointCloud = 2,
-    Matrix4x4 = 3
+    Matrix4x4 = 3,
+    LoadRoom = 4
 }
 
 public enum NetworkResponseType
 {
     AllGood = 0,
     DataCorrupt = 1
+}
+
+public enum NetworkCommand
+{
+    Nothing = 0,
+    GlobalRegistration = 1,
+    RefineRegistration = 2,    
 }
 
 public static class MatrixExtensions

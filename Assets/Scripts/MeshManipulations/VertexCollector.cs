@@ -8,9 +8,9 @@ using UnityEngine.Events;
 using UnityEngine.XR.WSA;
 
 public class VertexCollector : MonoBehaviour
-{    
+{
     [SerializeField] SpatialMappingManager  manager;    
-
+    //public Transform spatialMappingParent;
     float timeStep = 0;
     float currentTime = 0;
     float elapsedTime = 0;
@@ -40,10 +40,32 @@ public class VertexCollector : MonoBehaviour
         return normals;
     }
 
+    public void Traverse(Transform root)
+    {
+        if (root.childCount == 0) { return; }        
+        if (root.GetComponent<MeshFilter>()) 
+        { 
+            MeshFilter filter = root.GetComponent<MeshFilter>();
+            var mesh = filter.sharedMesh;
+            foreach (Vector3 vertex in mesh.vertices) 
+            { 
+                vertices.Add(root.TransformPoint(vertex)); 
+            }
+            foreach (Vector3 normal in mesh.normals)
+            {
+                normals.Add(root.TransformPoint(normal));
+            }
+        }
+        foreach (Transform child in root)
+        {
+            Traverse(child);
+        }
+    }
+
     public void Collect()
     {
         vertices.Clear();
-        normals.Clear();        
+        normals.Clear();
         
         List<MeshFilter> meshes = manager.GetMeshFilters();
         foreach (MeshFilter meshFilter in meshes)
@@ -60,6 +82,9 @@ public class VertexCollector : MonoBehaviour
                 normals.Add(transform.TransformDirection(normal).normalized);
             }
         }
+        
+
+        //Traverse(spatialMappingParent);
         
         string toLog = string.Empty;
         

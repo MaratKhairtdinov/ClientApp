@@ -10,8 +10,7 @@ public class UIEventHandler : MonoBehaviour
 {
     public TCPClient client;
     public VertexCollector collector;
-    public SpatialMappingObserver spatialMappingObserver;
-    public Counter counter;
+    public SpatialMappingObserver spatialMappingObserver;    
 
     public KeyboardInput keyboardInput;
 
@@ -22,15 +21,14 @@ public class UIEventHandler : MonoBehaviour
             case ButtonType.Connect:
                 client.Connect();                
                 break;
-            case ButtonType.SendHello:
-                //client.SendString("Message to check");
+            case ButtonType.SendMatrix:
                 client.SendMatrix();
                 break;
-            case ButtonType.CollectVertices:
-                collector.Collect();
+            case ButtonType.Refine:
+                client.SendPointCloud(NetworkCommand.RefineRegistration);
                 break;
-            case ButtonType.SendPointcloud:
-                client.SendPointCloud();
+            case ButtonType.Register:
+                client.SendPointCloud(NetworkCommand.GlobalRegistration);
                 break;
             case ButtonType.SetHost:
                 keyboardInput.OnKeyboardCalled();
@@ -40,8 +38,12 @@ public class UIEventHandler : MonoBehaviour
                     client.OnHostSet.Invoke(client.host);
                 }
                 break;
+            case ButtonType.SelectRoom:
+                client.SelectRoom();
+                break;
         }
-        counter.HandleButton(buttonType);
+        //resolution.HandleButton(buttonType);
+        //roomSelector.HandleButton(buttonType);
     }
 }
 [Serializable]
